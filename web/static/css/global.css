@@ -6,6 +6,8 @@
     --general-color:#a0a0a0;
     --background-color:#272934;
     --background-highlight:#101216;
+
+    --primary:#5865F2;
 }
 
 .vertical-center {
@@ -69,8 +71,16 @@ address {
 .navbar-title {
     font-size:35px;
     text-transform:uppercase;
-    font-weight:700
+    font-weight:700;
+    text-shadow:0 0 10px black;
 }
+.navbar-image {
+    font-size:35px;
+    text-transform:uppercase;
+    font-weight:700;
+    box-shadow:0 0 10px black;
+}
+
 
 .page-header {
     position:absolute;
@@ -91,4 +101,31 @@ address {
     font-size:20px;
     font-weight:300;
     color:var(--general-color);
+}
+
+.button-primary {
+    background-color:var(--primary);
+    width:175px;
+    height:50px;
+    color:white;
+    border:0;
+    border-radius:10px;
+    font-size:15px;
+    box-shadow:0 0 10px black;
+    cursor:pointer;
+    transition:border-radius .1s
+}
+
+.button-primary:hover {
+    border-radius:5px;
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
 }
