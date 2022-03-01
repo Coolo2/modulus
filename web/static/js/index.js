@@ -6,8 +6,14 @@ header = document.getElementById("page-header")
 
 
 window.onload = async function() {
-    header.style.opacity = 1
-    header.style.transform = "translateY(0px)"
+    setTimeout(
+        function() {
+            header.style.opacity = 1
+            header.style.transform = "translateY(0px)"
+        }, 
+        200
+    )
+    
 }
 
 window.onscroll = async function() {

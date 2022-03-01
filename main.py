@@ -28,7 +28,7 @@ async def on_ready():
 
     quart_app = await web.generate_app(bot)
 
-    bot.loop.create_task(quart_app.run_task(host="0.0.0.0", port=5000))
+    bot.loop.create_task(quart_app.run_task(host=setup.host, port=setup.port))
 
     await bot.sync_commands()
 
