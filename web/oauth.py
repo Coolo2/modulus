@@ -10,6 +10,7 @@ class Oauth(object):
     redirect_uri = setup.address + "/return"
     discord_login_url = setup.invite_with_identify
     discord_token_url = "https://discord.com/api/oauth2/token"
+    revoke_discord_token_url = "https://discord.com/api/oauth2/token"
     discord_api_url = "https://discord.com/api"
 
     @staticmethod
@@ -30,8 +31,38 @@ class Oauth(object):
         async with aiohttp.ClientSession() as session:
             async with session.post(url = Oauth.discord_token_url, data=payload, headers=headers) as r:
                 json = await r.json()
-                return json["access_token"]
+                return json
     
+    @staticmethod
+    async def refresh_token(refresh_token):
+        payload = {
+            'client_id': Oauth.client_id,
+            'client_secret': Oauth.client_secret,
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token
+        }
+        
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url = Oauth.discord_token_url, data=payload, headers=headers) as r:
+                json = await r.json()
+                return json
+    
+    @staticmethod
+    async def get_user_guilds(access_token):
+        url = Oauth.discord_api_url+"/users/@me/guilds"
+        headers = {
+            'Authorization': "Bearer {}".format(access_token)
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url=url, headers=headers) as r:
+                json = await r.json()
+                return json
+
     @staticmethod
     async def get_user_json(access_token):
         url = Oauth.discord_api_url+"/users/@me"

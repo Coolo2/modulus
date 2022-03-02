@@ -2,6 +2,7 @@
     <head>
         <link rel="stylesheet" href="/static/css/global.css">
         <link rel="stylesheet" href="/static/css/index.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     </head>
     <address>
         {{address}}
@@ -9,21 +10,34 @@
     <body>
         <div class="navBar">
             <div>
-                <img style="width:50px;border-radius:25px;left:calc(15% - 70px)" class="vertical-center navBar-image" src="/static/images/avatar.png" draggable="false" onmousedown="return false" >
+                <img style="left:calc(15% - 70px)" class="vertical-center navBar-image" src="/static/images/avatar.png" draggable="false" onmousedown="return false" >
                 <span style="left:15%" class="vertical-center navBar-title noselect">Modulus</span>
             </div>
-            <div class="button-primary" style="position:absolute;top:500px;"><span class="all-center noselect">Invite me</span></div>
+            <a class="navBar-item vertical-center noselect" style="left:calc(15% + 250px)" href="/commands"><span style="padding:10px">Commands</span></a>
+            <a class="navBar-item vertical-center noselect" style="left:calc(15% + 450px)" href="/status"><span style="padding:10px">Status</span></a>
+
+            <a class="navBar-item vertical-center noselect" style="right:10%;opacity:0;transition:opacity .1s" id="profile">
+                <span><img style="left:calc(15% - 70px);" class="vertical-center navBar-image" draggable="false" onmousedown="return false" id="profile-avatar"></span>
+                <span id="profile-name" style="margin-left:15px">Name#1234</span>
+                <span><i class="fas fa-caret-down"></i></span>
+            </a>
+            <div class="navBar-menu noselect" style="right:10%;" id="profile-menu">
+                <a class="navBar-menu-item"><span class="all-center">Servers</span></a>
+                <a class="navBar-menu-item" style="top:50px"><span class="all-center">Settings</span></a>
+                <a class="navBar-menu-item" style="top:150px;color:red" href="/logout"><span class="all-center">Log Out</span></a>
+            </div>
         </div>
 
         <div class="topper"><div class="topper-fade"></div></div>
 
-        <div class="page-header" id="page-header" style="opacity:0">
+        <div class="page-header" id="page-header">
             
-            <div class="page-header-title">Create your own bot!</div>
-            <div class="page-header-description">Modulus is a module based Discord bot which is one of the must customizable out there!
+            <div class="page-header-title" id="page-header-title" style="opacity:0">Create your own bot!</div>
+            <div class="page-header-description" style="opacity:0" id="page-header-description">Modulus is a module based Discord bot which is one of the must customizable out there!
                 <br><br>
                 Have a look at what I can do:
             </div>
+            <a class="button-primary" style="position:absolute;margin-top:100px;opacity:0;transform: translateY(100px);" href="/invite" id="page-header-invite"><span class="all-center noselect">Invite me</span></a >
         </div>
     </body>
 
