@@ -1,6 +1,5 @@
 
 
-
 headerTitle = document.getElementById("page-header-title")
 headerDescription = document.getElementById("page-header-description")
 

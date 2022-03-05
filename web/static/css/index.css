@@ -1,0 +1,22 @@
+.page-header {
+    position:absolute;
+    width:calc(400px + 20%);
+    left: 10%;
+    top:300px;
+    text-shadow:0 0 5px black, 0 0 15px black, 0 0 30px rgb(0, 0, 0, 0.8);
+}
+
+.page-header-title {
+    font-size:60px;
+    font-weight:800;
+    transition: opacity 1s, transform 1s;
+    transform: translateY(100px);
+}
+
+.page-header-description {
+    font-size:20px;
+    font-weight:300;
+    color:var(--general-color);
+    transition: opacity 1s, transform 1s;
+    transform: translateY(100px);
+}

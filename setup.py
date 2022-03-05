@@ -2,8 +2,8 @@ import os
 
 env = os.getenv 
 
-address = "http://localhost:5000"
-host = "127.0.0.1"
+address = "http://192.168.0.104:5000"
+host = "0.0.0.0"
 port = 5000
 
 application_id = 947529373404266548

@@ -1,5 +1,6 @@
 discord/
 sql/
+*.db
 
 test.py
 

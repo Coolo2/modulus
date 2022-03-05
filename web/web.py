@@ -2,6 +2,7 @@ import quart
 import discord
 import setup
 import os
+import urllib.parse
 
 from web.oauth import Oauth
 from web import encryption
@@ -23,11 +24,28 @@ async def generate_app(bot : discord.Bot) -> quart.Quart:
     
     @app.route("/invite", methods=["GET"])
     async def invite():
-        return quart.redirect(setup.invite_with_identify)
+        gd = ""
+
+        if "guild_id" in dict(quart.request.args):
+
+            gd = f"&guild_id={quart.request.args['guild_id']}"
+
+        resp = await quart.make_response(quart.redirect(setup.invite_with_identify + gd))
+
+        if "to" in quart.request.args:
+            resp.set_cookie("redirectTo", urllib.parse.quote(quart.request.args["to"]))
+
+        return resp
     
     @app.route("/login", methods=["GET"])
     async def login():
-        return quart.redirect(setup.identify)
+        
+        resp = await quart.make_response(quart.redirect(setup.identify))
+
+        if "to" in quart.request.args:
+            resp.set_cookie("redirectTo", urllib.parse.quote(quart.request.args["to"]))
+
+        return resp
     
     @app.route("/logout", methods=["GET"])
     async def logout():
@@ -56,10 +74,18 @@ async def generate_app(bot : discord.Bot) -> quart.Quart:
 
         guild_json = await Oauth.get_user_guilds(access["access_token"])
 
+        for i, guild_data in enumerate(guild_json):
+            for guild in bot.guilds:
+                if int(guild_data["id"]) == guild.id:
+                    guild_json[i]["in"] = True 
+                    
+            if "in" not in guild_json[i]:
+                guild_json[i]["in"] = False 
+
         userGuilds[ access["refresh_token"] ] = {"access":access, "guilds":guild_json}
 
         resp = await quart.make_response(quart.jsonify(guild_json))
-        resp.set_cookie("code", access["refresh_token"])
+        resp.set_cookie("code", access["refresh_token"], max_age=8_760*3600)
 
         return resp
 
@@ -77,6 +103,7 @@ async def generate_app(bot : discord.Bot) -> quart.Quart:
         access = await Oauth.refresh_token(code)
 
         if "error" in access:
+            print(access)
             return quart.jsonify({"error":"Login invalid"})
 
         user_json = await Oauth.get_user_json(access["access_token"])
@@ -84,7 +111,7 @@ async def generate_app(bot : discord.Bot) -> quart.Quart:
         users[ access["refresh_token"] ] = {"access":access, "user":user_json}
 
         resp = await quart.make_response(quart.jsonify(user_json))
-        resp.set_cookie("code", access["refresh_token"])
+        resp.set_cookie("code", access["refresh_token"], max_age=8_760*3600)
 
         return resp
 
@@ -100,16 +127,30 @@ async def generate_app(bot : discord.Bot) -> quart.Quart:
 
         users[ access["refresh_token"] ] = {"access":access}
 
-        resp = await quart.make_response(quart.redirect("/"))
-        resp.set_cookie("code", access["refresh_token"])
+        url = "/"
+        if "redirectTo" in quart.request.cookies:
+            url = quart.request.cookies.get("redirectTo")
+
+        resp = await quart.make_response(quart.redirect(url))
+
+        if url != "/":
+            resp.delete_cookie("redirectTo")
+
+        resp.set_cookie("code", access["refresh_token"], max_age=8_760*3600)
 
         return resp
-    
+
     @app.route("/dashboard", methods=["GET"])
     async def dashboard():
         
 
-        return quart.redirect("/")
+        return await quart.render_template("dashboard.html")
+
+    @app.route("/dashboard/<path:id>", methods=["GET"])
+    async def dashboard_with_id(id):
+        
+
+        return await quart.render_template("dashboard.html")
         
 
     return app
