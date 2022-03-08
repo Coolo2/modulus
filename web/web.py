@@ -1,5 +1,6 @@
 import quart 
 import discord
+from discord.ext import commands
 import setup
 import os
 import urllib.parse
@@ -7,7 +8,7 @@ import urllib.parse
 from web.oauth import Oauth
 from web import encryption
 
-async def generate_app(bot : discord.Bot) -> quart.Quart:
+async def generate_app(bot : commands.Bot) -> quart.Quart:
 
     app = quart.Quart(__name__, template_folder=os.path.abspath("./web/templates"), static_folder=os.path.abspath("./web/static"))
 

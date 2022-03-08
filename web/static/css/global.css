@@ -1,5 +1,6 @@
 
 @import url("https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900");
+@import url("https://fonts.googleapis.com/css?family=Nunito:200,300,400,500,600,700,800,900");
 
 :root {
     --bold-color:#FFFFFF;
@@ -54,7 +55,7 @@ body {
     color:var(--bold-color);
     font-family:Poppins;
     margin:0;
-    height:5000px;
+    height:5000px
 }
 
 .topper {
@@ -82,14 +83,26 @@ address {
     height:100px;
     position:absolute
 }
+
+.title {
+    font-size:35px;
+    text-transform:uppercase;
+    font-weight:800;
+    text-shadow:0 0 10px black;
+    text-decoration:none;
+    color:white;
+    font-family:Nunito
+}
+
 .navbar-title {
     font-size:35px;
     text-transform:uppercase;
-    font-weight:700;
+    font-weight:900;
     text-shadow:0 0 10px black;
     cursor:pointer;
     text-decoration:none;
-    color:white
+    color:white;
+    font-family:Nunito
 }
 .navbar-item {
     font-size:20px;
@@ -156,6 +169,35 @@ address {
 .button-primary:hover {
     border-radius:5px;
     box-shadow:0 0 20px black;
+}
+
+.button-disabled {
+    background-color:grey;
+    width:175px;
+    height:50px;
+    color:white;
+    border:0;
+    border-radius:10px;
+    font-size:15px;
+    box-shadow:0 0 10px black;
+    text-shadow:none;
+    text-decoration:none;
+    cursor:default;
+    -moz-box-sizing: border-box; 
+    -webkit-box-sizing: border-box; 
+    box-sizing: border-box; 
+}
+
+.notification {
+    width:350px;
+    border-radius:15px;
+    position:absolute;
+    bottom:15px;
+    right:-400px;
+    backdrop-filter:blur(10px);
+    background-color:rgb(0, 0, 0, 0.5);
+    padding:15px;
+    transition:right .5s
 }
 
 .noselect {

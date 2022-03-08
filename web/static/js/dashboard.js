@@ -50,6 +50,10 @@ async function loadGuild(e) {
 async function getGuilds() {
     guilds = await get("/api/user/guilds")
 
+    if (guilds == undefined) {
+        return await notifications.new("Servers unavailable", "Log in request failed. Login has been disabled.")
+    }
+
     guilds.sort(dynamicSort("name"));
 
     moveToTop = []

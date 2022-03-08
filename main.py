@@ -1,7 +1,9 @@
 from client.client import Client 
 
-from client import version
+from client import version, bridge
 
+from discord.ext import commands
+from discord import app_commands
 import discord 
 import setup
 from web import web
@@ -11,9 +13,20 @@ from discord.ext import tasks
 client = Client()
 
 intents = discord.Intents.default()
+intents.message_content = True
 
-bot = discord.Bot()
+bot = commands.Bot("!", intents=intents)
+tree = app_commands.CommandTree(bot)
+
+bot.tree = tree
 bot.client = client 
+
+refresh_commands = False
+
+@tree.command(name="test", description="test command", guild=setup.slash_guild)
+async def _test_command(interaction):
+
+    return await interaction.response.send_message("hi")
 
 @bot.event 
 async def on_connect():
@@ -30,7 +43,12 @@ async def on_ready():
 
     bot.loop.create_task(quart_app.run_task(host=setup.host, port=setup.port))
 
-    await bot.sync_commands()
+    if refresh_commands:
+        await tree.sync(guild=setup.slash_guild)
+
+@bot.event 
+async def on_message(message : discord.Message):
+    await bridge.parse_message(bot, bot.tree, message)
 
 @tasks.loop(seconds=60)
 async def regular_task():

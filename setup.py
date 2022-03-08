@@ -1,4 +1,5 @@
 import os
+import discord
 
 env = os.getenv 
 
@@ -16,3 +17,5 @@ invite_with_identify = f"https://discord.com/api/oauth2/authorize?client_id={app
 identify = f"https://discord.com/api/oauth2/authorize?client_id={application_id}&permissions=8&redirect_uri={address}/return&response_type=code&scope=identify%20guilds"
 
 client_secret = env("client_secret")
+
+slash_guild = discord.Object(450914634963353600)
