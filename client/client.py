@@ -1,4 +1,4 @@
-from client import fileclient, httpclient
+from client import fileclient, httpclient, dataclient
 
 class Client():
 
@@ -8,3 +8,5 @@ class Client():
         self.http = httpclient.HTTP(self)
 
         self.file = fileclient.FileClient(self)
+
+        self.data = dataclient.DataClient(self)

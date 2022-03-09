@@ -1,5 +1,6 @@
 import discord 
 from discord.ext import commands
+from discord.ext.commands import core
 from discord import app_commands
 
 import setup
@@ -19,34 +20,20 @@ def bridge_command(func, **kwargs):
     cmd = BridgeCommand(func)
 
     cmd.run()
-
-class BridgeInteraction():
-
-    def __init__(self, bot : commands.Bot, command : app_commands.Command, message : discord.Message):
-        self.command = command 
-        self.bot = bot 
-        self.message = message
-
-        self.response = BridgeResponse(self)
-
-class BridgeResponse():
-
-    def __init__(self, bridge : BridgeInteraction):
-        self.bridge = bridge
-
-    async def send_message(self, content=None):
-        await self.bridge.message.reply(content=content, mention_author=False)
-
-
     
-
-
-async def parse_message(bot : commands.Bot, tree : app_commands.CommandTree, message : discord.Message):
+async def sync(bot : commands.Bot, tree : app_commands.CommandTree, refresh_commands : bool):
+    
     commands = tree.get_commands(guild=setup.slash_guild)
-
-    prefix = await bot.get_prefix(message)
+    
+    print(commands)
 
     for command in commands:
-        if message.content.lower().startswith(prefix.lower() + command.name.lower()):
 
-            await command.callback(BridgeInteraction(bot, command, message))
+        cmd = core.Command(command.callback)
+        cmd.name = command.name 
+        cmd.description = command.description
+        
+        bot.add_command(cmd)
+
+    if refresh_commands:
+        await tree.sync(guild=setup.slash_guild)

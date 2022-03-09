@@ -1,6 +1,7 @@
 from client import client
 import aiosqlite
 import aiofiles
+import setup
 
 
 class FileClient():
@@ -25,9 +26,9 @@ class FileClient():
 
             await database.reload()
 
-            await self.client.http.post_file(url=database.url_post, file_name=database.name, file_path=database.path)
+            data = await self.client.http.post_file(url=database.url_post, file_name=database.name, file_path=database.path)
 
-            print(f"done {database.path}")
+            print(f"done {database.path} {data.status}")
 
 class Database():
 
@@ -35,7 +36,7 @@ class Database():
         self.name = name
         self.path = f"sql/{self.name}"
         self.url_get = f"https://helperdata.glitch.me/get/{self.path}"
-        self.url_post = f"https://helperdata.glitch.me/post/{self.path}"
+        self.url_post = f"https://helperdata.glitch.me/post{setup.env('databaseToken')}/{self.path}"
         
         print(f"Getting database {self.path}")
         fileData = fileclient.client.http.loop.run_until_complete(
@@ -50,6 +51,19 @@ class Database():
     
     async def initialise(self):
         await self.reload()
+    
+    async def table_exists(self, table : str):
+        cursor = await self.db.execute( "SELECT name FROM sqlite_master WHERE type='table' ")
+        tables = await cursor.fetchall()
+
+        return  (table,) in tables
+    
+    async def row_exists_with_value(self, table : str, attribute : str, value):
+        cursor = await self.db.execute(f"SELECT * FROM {table} WHERE {attribute}=?", [value])
+        all = await cursor.fetchall()
+
+        return len(all) > 0
+
 
     async def reload(self):
         if self.db:

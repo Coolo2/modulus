@@ -5,10 +5,12 @@ import setup
 import os
 import urllib.parse
 
+from client import client
+
 from web.oauth import Oauth
 from web import encryption
 
-async def generate_app(bot : commands.Bot) -> quart.Quart:
+async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quart:
 
     app = quart.Quart(__name__, template_folder=os.path.abspath("./web/templates"), static_folder=os.path.abspath("./web/static"))
 
@@ -152,6 +154,17 @@ async def generate_app(bot : commands.Bot) -> quart.Quart:
         
 
         return await quart.render_template("dashboard.html")
+    
+    @app.route("/api/dashboard/<path:guild_id>/settings", methods=["GET"])
+    async def dashboard_settings(guild_id : int):
+
+        print(guild_id)
+
+        guild = bot.get_guild(int(guild_id))
+        prefix = await client.data.get_prefix(guild)
+
+        return quart.jsonify({"prefix":prefix})
+        
         
 
     return app

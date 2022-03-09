@@ -36,8 +36,10 @@ class HTTP():
         self, url, file_name : str, file_path : str
     ):
         async with aiofiles.open(file_path, 'rb') as f:
+            data = aiohttp.FormData()
+            data.add_field('file', f, filename=file_name)
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, data={file_name: f}) as response:
+                async with session.post(url, data=data) as response:
                     
                     return response 
         

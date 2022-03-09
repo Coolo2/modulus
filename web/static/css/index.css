@@ -11,6 +11,7 @@
     font-weight:800;
     transition: opacity 1s, transform 1s;
     transform: translateY(100px);
+    font-family:Nunito
 }
 
 .page-header-description {

@@ -3,6 +3,7 @@ elements = document.getElementsByTagName("div")
 dropdown = document.getElementById("dropdown-guild-menu")
 
 var guilds = []
+var currentGuild = {}
 
 async function loadGuild(e) {
     id = e.target.id
@@ -12,6 +13,8 @@ async function loadGuild(e) {
             break
         }
     }
+
+    currentGuild = guild
     
     guildElement = document.createElement("div")
     guildElement.innerHTML = ``
@@ -140,3 +143,21 @@ async function initDropdowns() {
 initDropdowns()
 getGuilds()
 
+
+// Functions
+
+async function loadSettings(e) {
+
+    if (document.getElementById("dashboard-settings").style.opacity != 1) {
+        settings = await get(`${address}/api/dashboard/${currentGuild.id}/settings`)
+    
+        e.style.backgroundColor = "rgb(255, 255, 255, 0.2)"
+        document.getElementById("dashboard-settings").style.opacity = "100%"
+        document.getElementById("dashboard-settings-prefix").value = settings.prefix
+    } else {
+        e.style.backgroundColor = ""
+        document.getElementById("dashboard-settings").style.opacity = "0%"
+    }
+    
+    
+}

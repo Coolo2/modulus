@@ -8,7 +8,7 @@ host = "0.0.0.0"
 port = 5000
 
 application_id = 947529373404266548
-
+default_prefix = "."
 version = "1.0.0"
 
 production = False

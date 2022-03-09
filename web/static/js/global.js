@@ -12,7 +12,7 @@ notifications = {
             document.body.style.overflowX = "auto"
         }, 500)
     },
-    new : async function (title, message) {
+    new : async function (title, message, onclick = null) {
         for (notification of this.notifications) {
             await notifications.close(notification)
         }
@@ -28,9 +28,27 @@ notifications = {
 
         notificationMessage = document.createElement("div")
         notificationMessage.innerText = message 
+
+        notificationClose = document.createElement("i")
+        notificationClose.classList = "fa fa-times notification-close"
+        notificationClose.onclick = async function() {
+            await notifications.close(notification)
+        }
+
         
         notification.appendChild(notificationTitle)
         notification.appendChild(notificationMessage)
+        notification.appendChild(notificationClose)
+        
+        if (onclick) {
+            notification.onmouseover = function() {notification.style.textDecoration = "underline"}
+            notification.onmouseout = function() {notification.style.textDecoration = "none"}
+            notification.onclick = onclick
+            notification.style.cursor = "pointer"
+        } else {
+            notification.onclick = notificationClose.onclick
+        }
+        
 
         document.body.appendChild(notification)
 
@@ -38,15 +56,13 @@ notifications = {
 
         notification.style.right = "15px"
 
-        setTimeout(async function() {
-            await notifications.close(notification)
-        }, message.length * 100)
+        setTimeout(notificationClose.onclick, (message.length + title.length) * 100)
 
         
     }
 }
 
-
+notifications.new("Test noti", "ignore this yes", function() {console.log("h")})
 
 async function get(url) {
 
@@ -154,14 +170,21 @@ async function doProfile() {
 doProfile()
 
 elements = document.getElementsByTagName("a")
+var r = document.querySelector(':root');
 
 async function resizeHandler() {
-    if (window.innerWidth < 1000) {
+    
+    if (window.innerWidth / window.innerHeight < 0.6) {
+        r.style.setProperty('--font-size', '20px');
+    } else {
+        r.style.setProperty('--font-size', '15px');
+    }
+
+    if (window.innerWidth < 1000) { 
         navbarMenuButton.style.display = "block"
 
-        
-
         for (element of elements) {
+            console.log(element.classList.contains("navBar-item"))
             if (element.classList.contains("navBar-item") && !element.id) {
                 element.style.display = "none"
             }
@@ -200,3 +223,5 @@ function removeAllInstances(arr, item) {
     }
     
 }
+
+
