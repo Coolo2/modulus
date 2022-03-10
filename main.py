@@ -7,32 +7,31 @@ from discord import app_commands
 import discord 
 import setup
 from web import web
+import os
 
 from discord.ext import tasks
 
-client = Client()
+
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot("!", intents=intents)
+async def get_prefix(bot : commands.Bot, message : discord.Message):
+
+    prefix = await client.data.get_prefix(message.guild)
+    return commands.when_mentioned_or(prefix, prefix.upper(), prefix.capitalize())(bot, message)
+
+
+bot = commands.Bot(command_prefix=get_prefix, intents=intents)
+client = Client(bot)
+
 tree = app_commands.CommandTree(bot)
+extensions = [file.replace(".py", "") for file in os.listdir('./cogs') if file.endswith(".py")]
 
 bot.tree = tree
 bot.client = client 
 
-refresh_commands = True
-
-@tree.command(name="test", description="test command", guild=setup.slash_guild)
-async def _test_command(ctx : discord.Interaction | commands.Context, arg : str):
-    
-    if isinstance(ctx, discord.Interaction):
-
-        return await ctx.response.send_message(arg)
-    else:
-
-        return await ctx.reply(arg, mention_author=False)
-
+refresh_commands = False
 
 @bot.event 
 async def on_connect():
@@ -40,9 +39,12 @@ async def on_connect():
 
 @bot.event 
 async def on_ready():
-    g = bot.get_guild(450914634963353600)
 
-    
+
+    guild = bot.get_guild(450914634963353600)
+    user = await bot.fetch_user(368071242189897728)
+
+    print(await client.data.get_logs(guild))
 
     await bot.change_presence(activity=discord.Activity(name=f"/help | v{version.versions[0].name}", type=discord.ActivityType.playing))
     print(f"{bot.user} online.")
@@ -55,10 +57,11 @@ async def on_ready():
 
     await bridge.sync(bot, tree, refresh_commands)
 
-timeframe = 60 if setup.production else 15
-
-@tasks.loop(seconds=timeframe)
+@tasks.loop(seconds=60 if setup.production else 15)
 async def regular_task():
     await bot.client.file.sync_databases()
+
+for extension in extensions:
+    bot.load_extension(f"cogs.{extension}")
 
 bot.run(setup.env("token"))

@@ -24,8 +24,6 @@ def bridge_command(func, **kwargs):
 async def sync(bot : commands.Bot, tree : app_commands.CommandTree, refresh_commands : bool):
     
     commands = tree.get_commands(guild=setup.slash_guild)
-    
-    print(commands)
 
     for command in commands:
 

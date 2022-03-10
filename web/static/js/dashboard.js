@@ -6,6 +6,7 @@ var guilds = []
 var currentGuild = {}
 
 async function loadGuild(e) {
+    document.getElementById("modules-hider").style.display = "block"
     id = e.target.id
 
     for (guild of guilds) {
@@ -47,6 +48,8 @@ async function loadGuild(e) {
     document.getElementById("dropdown-guild").click()
 
     window.history.pushState(null, null, `/dashboard/${guild.id}`)
+
+    openSettings(document.getElementById("settings"))
 
 }
 
@@ -144,20 +147,156 @@ initDropdowns()
 getGuilds()
 
 
+oldResize = window.onresize
+
+window.onresize = function(e) {
+    oldResize(e)
+
+    if (window.innerHeight < 750) {
+        document.getElementById("body").style.height = "800px"
+        document.getElementById("modules").style.height = "800px"
+    } else {
+        document.getElementById("body").style.height = "calc(100% - 270px)"
+        document.getElementById("modules").style.height = "calc(100% - 270px)"
+    }
+}
+
+
+
+let timer;
+
+async function save(url, data, func) {
+    
+    clearTimeout(timer);
+    // Sets new timer that may or may not get cleared
+    timer = setTimeout(async () => {
+
+        data.user = profileData.id
+
+        returned = await post(url, data)
+
+        if (!returned.error) {
+            nt = await notifications.new("Successfully saved", returned.message)
+            nt.style.backgroundColor = "rgb(0, 255, 0, 0.2)"
+
+            if (func) {
+                func(returned.data)
+            }
+
+        } else {
+            nt = await notifications.new("Error on save", returned.message)
+            nt.style.backgroundColor = "rgb(255, 0, 0, 0.2)"
+        }
+        
+        
+
+        return returned
+    }, 1000);
+}
+
 // Functions
 
-async function loadSettings(e) {
+async function closeAll(element) {
+    var bodyItems = document.getElementById("body").querySelectorAll(".body-item"); 
+    var moduleItems = document.getElementById("modules").querySelectorAll(".modules-item"); 
+
+    for (item of bodyItems) {
+        item.style.opacity = 0
+        item.style.height = 0
+    }
+
+    for (moduleItem of moduleItems) {
+        moduleItem.style.backgroundColor = ""
+    }
+
+
+}
+
+async function loadSettings(settings) {
+    if (!settings) {
+        settings = await get(`${address}/api/dashboard/${currentGuild.id}/settings`)
+    }
+    
+    document.getElementById("dashboard-settings-prefix").value = settings.prefix
+}
+
+async function openSettings(e) {
+    
 
     if (document.getElementById("dashboard-settings").style.opacity != 1) {
-        settings = await get(`${address}/api/dashboard/${currentGuild.id}/settings`)
-    
+        await closeAll(document.getElementById("dashboard-settings"))
+        await loadSettings()
+
         e.style.backgroundColor = "rgb(255, 255, 255, 0.2)"
         document.getElementById("dashboard-settings").style.opacity = "100%"
-        document.getElementById("dashboard-settings-prefix").value = settings.prefix
+        document.getElementById("dashboard-settings").style.height = "100%"
+        
     } else {
         e.style.backgroundColor = ""
         document.getElementById("dashboard-settings").style.opacity = "0%"
+        document.getElementById("dashboard-settings").style.height = "0%"
+    }
+}
+
+document.getElementById("dashboard-settings-prefix").oninput = async function(e) {
+    await save(`${address}/api/dashboard/${currentGuild.id}/settings`, {prefix:e.target.value}, loadSettings)
+}
+
+async function loadLogs(logs) {
+    if (!logs) {
+        logs = await get(`${address}/api/dashboard/${currentGuild.id}/logs`)
     }
     
+    table = document.getElementById("dashboard-logs-table")
     
+    table.innerHTML = `<tr"><th></th><th class="title">Time</th><th class="title">User</th><th class="title">Description</th></tr>`
+
+    counter = logs.length
+    for (log of logs) {
+        row = document.createElement("tr")
+
+        index = document.createElement("th")
+        time = document.createElement("th")
+        user = document.createElement("th")
+        description = document.createElement("th")
+
+        index.classList = "body-item-table-field description"
+        time.classList = "body-item-table-field description"
+        user.classList = "body-item-table-field description"
+        description.classList = "body-item-table-field description"
+
+        time.innerText = timeConverter(log.timestamp)
+        user.innerText = log.user_tag
+        description.innerText = log.description
+        index.innerText = `${counter}.`
+
+        row.appendChild(index)
+        row.appendChild(time)
+        row.appendChild(user)
+        row.appendChild(description)
+
+        table.appendChild(row)
+
+        counter -= 1
+    }
 }
+
+async function openLogs(e) {
+
+    if (document.getElementById("dashboard-logs").style.opacity != 1) {
+        await closeAll(document.getElementById("dashboard-logs"))
+        await loadLogs()
+
+        e.style.backgroundColor = "rgb(255, 255, 255, 0.2)"
+        document.getElementById("dashboard-logs").style.opacity = "100%"
+        document.getElementById("dashboard-logs").style.height = "100%"
+        
+    } else {
+        e.style.backgroundColor = ""
+        document.getElementById("dashboard-logs").style.opacity = "0%"
+
+        document.getElementById("dashboard-logs").style.height = 0
+
+    }
+}
+

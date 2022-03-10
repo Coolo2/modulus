@@ -2,8 +2,9 @@ from client import fileclient, httpclient, dataclient
 
 class Client():
 
-    def __init__(self):
+    def __init__(self, bot):
         
+        self.bot = bot
         
         self.http = httpclient.HTTP(self)
 

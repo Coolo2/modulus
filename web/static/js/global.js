@@ -58,11 +58,9 @@ notifications = {
 
         setTimeout(notificationClose.onclick, (message.length + title.length) * 100)
 
-        
+        return notification
     }
 }
-
-notifications.new("Test noti", "ignore this yes", function() {console.log("h")})
 
 async function get(url) {
 
@@ -93,13 +91,9 @@ async function post(url, data) {
         },
         body:JSON.stringify(data)
     };
-    await fetch(url, settings)
-        .then(response => {
-            response.json()
-                .then(msg => {
-                    return msg
-                })
-        })
+    response = await fetch(url, settings)
+    
+    return await response.json()
 }
 
 function isHidden(e) {
@@ -117,11 +111,17 @@ navbarMenuButton = document.getElementById("navBar-menu-button")
 
 navbarMenuButton.onclick = async function() {
     if (navbarMenu.style.height != "200px") {
+        navbarMenu.style.opacity = "1000%"
         navbarMenu.style.height = "200px"
     } else {
         navbarMenu.style.height = "0px"
+        setTimeout(function() {
+            navbarMenu.style.opacity = 0
+        }, 100)
     }
 }
+
+var profileData
 
 async function doProfile() {
     if (profileName) {
@@ -159,9 +159,14 @@ async function doProfile() {
             if (profileMenu.style.height != "200px") {
                 profileDropdown.style.transform = "rotate(180deg)"
                 profileMenu.style.height = "200px"
+                profileMenu.style.opacity = 1
             } else {
                 profileDropdown.style.transform = "rotate(0deg)"
                 profileMenu.style.height = "0px"
+                setTimeout(function() {
+                    profileMenu.style.opacity = 0
+                }, 100)
+                
             }
             
         }
@@ -184,7 +189,6 @@ async function resizeHandler() {
         navbarMenuButton.style.display = "block"
 
         for (element of elements) {
-            console.log(element.classList.contains("navBar-item"))
             if (element.classList.contains("navBar-item") && !element.id) {
                 element.style.display = "none"
             }
@@ -222,6 +226,19 @@ function removeAllInstances(arr, item) {
         if (arr[i] === item) arr.splice(i, 1);
     }
     
+}
+
+function timeConverter(UNIX_timestamp){
+    var a = new Date(UNIX_timestamp * 1000);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var year = a.getFullYear();
+    var month = months[a.getMonth()];
+    var date = a.getDate();
+    var hour = a.getHours();
+    var min = a.getMinutes();
+    var sec = a.getSeconds();
+    var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+    return time;
 }
 
 

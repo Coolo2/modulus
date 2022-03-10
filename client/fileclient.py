@@ -60,9 +60,9 @@ class Database():
     
     async def row_exists_with_value(self, table : str, attribute : str, value):
         cursor = await self.db.execute(f"SELECT * FROM {table} WHERE {attribute}=?", [value])
-        all = await cursor.fetchall()
+        f = await cursor.fetchall()
 
-        return len(all) > 0
+        return len(f) > 0
 
 
     async def reload(self):

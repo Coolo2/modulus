@@ -143,6 +143,8 @@ address {
     overflow-y:hidden;
     transition: height .1s;
     box-shadow:0 0 10px rgb(0, 0, 0, 0.6);
+    border:1px solid black;
+    opacity:0;
 }
 .navBar-menu-item {
     height:50px;
@@ -174,7 +176,7 @@ address {
     color:white;
     border:0;
     border-radius:10px;
-    font-size:var(--font-size);
+    font-size:15px;
     box-shadow:0 0 10px black;
     text-shadow:none;
     cursor:pointer;
@@ -194,7 +196,7 @@ address {
     color:white;
     border:0;
     border-radius:10px;
-    font-size:var(--font-size);
+    font-size:15px;
     box-shadow:0 0 10px black;
     text-shadow:none;
     text-decoration:none;
@@ -213,7 +215,7 @@ address {
     backdrop-filter:blur(10px);
     background-color:rgb(0, 0, 0, 0.5);
     padding:15px;
-    transition:right .5s
+    transition:right .3s
 }
 .notification-close {
     position:absolute;

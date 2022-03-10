@@ -155,16 +155,63 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         return await quart.render_template("dashboard.html")
     
+    async def get_settings(guild : discord.Guild):
+
+        prefix = await client.data.get_prefix(guild)
+
+        return {"prefix":prefix}
+
+    
     @app.route("/api/dashboard/<path:guild_id>/settings", methods=["GET"])
     async def dashboard_settings(guild_id : int):
 
-        print(guild_id)
+        guild = bot.get_guild(int(guild_id))
+
+        settings = await get_settings(guild)
+
+        return quart.jsonify(settings)
+        
+    
+    @app.route("/api/dashboard/<path:guild_id>/settings", methods=["POST"])
+    async def save_dashboard_settings(guild_id : int):
+
+        data = await quart.request.json
+        guild = bot.get_guild(int(guild_id))
+
+        member : discord.Member = await guild.fetch_member(int(data["user"]))
+
+        if "prefix" in data:
+
+            if not member.guild_permissions.manage_guild:
+                return quart.jsonify({"error":True, "message":"Missing permissions."})
+
+            if len(data["prefix"]) > 10:
+                return quart.jsonify({"error":True, "message":"Prefix too long."})
+            
+            if data["prefix"].replace(" ", "") == "":
+                data["prefix"] = setup.default_prefix
+
+            await client.data.set_prefix(guild, data["prefix"])
+
+            await client.data.add_log(guild, member, "PREFIX_SET", f"{member} set server prefix to {data['prefix']}")
+
+            return quart.jsonify({"error":False, "message":"Successfully set prefix", "data":await get_settings(guild)})
+    
+    async def get_logs(guild : discord.Guild):
+
+        logs = await client.data.get_logs(guild)
+
+        return [log.to_dict() for log in logs]
+    
+    @app.route("/api/dashboard/<path:guild_id>/logs", methods=["GET"])
+    async def dashboard_logs(guild_id : int):
 
         guild = bot.get_guild(int(guild_id))
-        prefix = await client.data.get_prefix(guild)
 
-        return quart.jsonify({"prefix":prefix})
-        
+        logs = await get_logs(guild)
+
+        return quart.jsonify(logs)
+
         
 
     return app

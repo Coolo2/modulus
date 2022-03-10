@@ -10,6 +10,53 @@
         {{address}}
     </address>
     <body>
+        
+
+        <div class="modules" id="modules">
+            <div style="display:none" id="modules-hider">
+                <div class="modules-section">
+                    Bot
+                </div>
+                <div class="modules-item noseleect" onclick="openSettings(this)" id="settings"><i class="fa fa-cog modules-item-icon"></i><span class="modules-item-text">Settings</span></div>
+                <div class="modules-item noseleect" onclick="openLogs(this)" id="logs"><i class="fa fa-clipboard-list modules-item-icon"></i><span class="modules-item-text">Logs</span></div>    
+            </div>
+        </div>
+        <div class="body" id="body">
+            <div class="loader" style="margin:15px;right:0;position: absolute;opacity:0"></div>
+
+            <div class="body-item" id="dashboard-settings">
+                <div class="title" style="margin:15px">Server Settings</div>
+                <div class="body-item-section">
+                    <div class="subtitle">Server prefix</div>
+                    <div class="description">The prefix to use before using non-slash commands. Slash commands are still reccomended, however</div>
+
+                    <input class="input" id="dashboard-settings-prefix" placeholder="Server Prefix" style="margin-top:30px" maxlength="10">
+                </div>
+            </div>
+            <div class="body-item" id="dashboard-logs">
+                <div class="title" style="margin:15px">Modulus Logs</div>
+                <div class="body-item-section">
+                    <table class="body-item-table" id="dashboard-logs-table"></table>
+                </div>
+                
+            </div>
+
+        </div>
+
+        <div class="title" style="position:absolute;top:140px;left:50px;">
+            Dashboard - Guild
+        </div>
+        <div class="dropdown noselect" style="position:absolute;top:138px;left:500px;box-shadow:0 0 10px black;" id="dropdown-guild">
+            <span class="vertical-center" id="dropdown-guild" style="left:15px">Select a server</span>
+            <i class="fas fa-chevron-down vertical-center" style="right:15px" id="dropdown-guild"></i>
+            
+        </div>
+        <div id="dropdown-guild-menu" class="dropdown-menu" style="position:absolute;top:188px;left:500px;">
+            <div class="loader" style="margin:15px"></div>
+        </div>
+
+        <div class="topper" style="height:200px;"><div class="topper-fade"></div></div>
+        
         <div class="navBar">
             <a href="/">
                 <img style="left:calc(15% - 70px)" class="vertical-center navBar-image" src="/static/images/icon.jpeg" draggable="false" onmousedown="return false" >
@@ -35,44 +82,7 @@
                 <a class="navBar-menu-item" style="top:50px"><span class="all-center">Settings</span></a>
                 <a class="navBar-menu-item" style="top:150px;color:red" href="/logout"><span class="all-center">Log Out</span></a>
             </div>
-            
         </div>
-        <div class="modules">
-            <div class="modules-section">
-                Bot
-            </div>
-            <div class="modules-item noseleect" onclick="loadSettings(this)"><i class="fa fa-cog modules-item-icon"></i><span class="modules-item-text">Settings</span></div>
-        </div>
-        <div class="body">
-            <div class="loader" style="margin:15px;right:0;position: absolute;opacity:0"></div>
-
-            <div class="body-item" id="dashboard-settings">
-                <div class="title" style="margin:15px">Server Settings</div>
-                <div class="body-item-section">
-                    <div class="subtitle">Server prefix</div>
-                    <div class="description">The prefix to use before using non-slash commands. Slash commands are still reccomended, however</div>
-
-                    <input class="input" id="dashboard-settings-prefix" placeholder="Server Prefix" style="margin-top:30px">
-                </div>
-            </div>
-
-        </div>
-
-        <div class="title" style="position:absolute;top:140px;left:50px;">
-            Dashboard - Guild
-        </div>
-        <div class="dropdown noselect" style="position:absolute;top:138px;left:500px;box-shadow:0 0 10px black;" id="dropdown-guild">
-            <span class="vertical-center" id="dropdown-guild" style="left:15px">Select a server</span>
-            <i class="fas fa-chevron-down vertical-center" style="right:15px" id="dropdown-guild"></i>
-            
-        </div>
-        <div id="dropdown-guild-menu" class="dropdown-menu" style="position:absolute;top:188px;left:500px;">
-            <div class="loader" style="margin:15px"></div>
-        </div>
-
-        <div class="topper" style="height:200px;"><div class="topper-fade"></div></div>
-        
-        
     </body>
 
     <script src="/static/js/global.js"></script>
