@@ -4,6 +4,9 @@ dropdown = document.getElementById("dropdown-guild-menu")
 
 var guilds = []
 var currentGuild = {}
+var currentGuildData = {}
+
+var moduleList = ["tracking"]
 
 async function loadGuild(e) {
     document.getElementById("modules-hider").style.display = "block"
@@ -47,16 +50,37 @@ async function loadGuild(e) {
 
     document.getElementById("dropdown-guild").click()
 
-    window.history.pushState(null, null, `/dashboard/${guild.id}`)
+    currentGuildData = await request("GET", `${address}/api/dashboard/${currentGuild.id}`)
 
-    openSettings(document.getElementById("settings"))
+    await doModules(currentGuildData.modules)
+
+    if (!location.pathname.includes(guild.id)) {
+        window.history.pushState(null, null, `/dashboard/${guild.id}`)
+    }
+    
+
+    if (document.getElementById(location.pathname.split("/")[3])) {
+        document.getElementById(location.pathname.split("/")[3]).click()
+    } else {
+        document.getElementById("home").click()
+    }
 
 }
 
-async function getGuilds() {
-    guilds = await get("/api/user/guilds")
+async function doModules(modules) {
+    for (m of moduleList) {
+        if (modules.includes(m)) {
+            document.getElementById(`modules-${m}`).style.color = "var(--bold-color)"
+        } else {
+            document.getElementById(`modules-${m}`).style.color = "var(--general-color)"
+        }
+    }
+}
 
-    if (guilds == undefined) {
+async function getGuilds() {
+    guilds = await request("GET", "/api/user/guilds")
+
+    if (guilds.error) {
         return await notifications.new("Servers unavailable", "Log in request failed. Login has been disabled.")
     }
 
@@ -117,8 +141,12 @@ async function getGuilds() {
     }
 
     if (location.pathname.includes("/dashboard/")) {
-        document.getElementById(location.pathname.split("/").join("").replace("dashboard", "")).click()
+        document.getElementById(location.pathname.split("/")[2]).click()
+
+        
     }
+
+    document.getElementById("dropdown-guild-loader").style.opacity = 0
 
     
 }
@@ -165,36 +193,100 @@ window.onresize = function(e) {
 
 let timer;
 
-async function save(url, data, func) {
+var url 
+var data
+
+async function saveNoTime(method, url, data={}) {
+
+    document.getElementById("dashboard-loader").style.opacity = 1
+
+    data.user = profileData.id
+
+    returned = await request(method, url, data)
+
+    if (!returned.error) {
+        nt = await notifications.new("Successfully saved", returned.message)
+        nt.style.backgroundColor = "rgb(0, 255, 0, 0.2)"
+
+        
+    } else {
+        nt = await notifications.new("Error on save", returned.message)
+        nt.style.backgroundColor = "rgb(255, 0, 0, 0.2)"
+    }
     
+    document.getElementById("body-progress").style.transition = "width 0s"
+    document.getElementById("body-progress").style.width = "0"
+
+    document.getElementById("dashboard-loader").style.opacity = 0
+
+    return returned
+}
+
+async function save(url, data, func) {
+    document.getElementById("body-progress").style.transition = "width 0s"
+    document.getElementById("body-progress").style.width = "0"
+
+    setTimeout(function() {
+        document.getElementById("body-progress").style.transition = "width 2s linear"
+        document.getElementById("body-progress").style.width = "100%"
+    }, 100)
+    
+
     clearTimeout(timer);
     // Sets new timer that may or may not get cleared
     timer = setTimeout(async () => {
-
         data.user = profileData.id
 
-        returned = await post(url, data)
+        returned = await request("POST", url, data)
 
         if (!returned.error) {
             nt = await notifications.new("Successfully saved", returned.message)
             nt.style.backgroundColor = "rgb(0, 255, 0, 0.2)"
 
-            if (func) {
-                func(returned.data)
-            }
-
+            
         } else {
             nt = await notifications.new("Error on save", returned.message)
             nt.style.backgroundColor = "rgb(255, 0, 0, 0.2)"
         }
+
+        if (func && returned.data) {
+            func(returned.data)
+        }
         
+        document.getElementById("body-progress").style.transition = "width 0s"
+        document.getElementById("body-progress").style.width = "0"
         
 
         return returned
-    }, 1000);
+    }, 2000);
 }
 
 // Functions
+
+async function loadHome(data) {
+    
+
+}
+
+async function openHome(e) {
+    await loadHome()
+
+    if (document.getElementById("dashboard").style.opacity != 1) {
+        await closeAll(document.getElementById("dashboard"))
+
+        e.style.backgroundColor = "rgb(255, 255, 255, 0.2)"
+        document.getElementById("dashboard").style.opacity = "100%"
+        document.getElementById("dashboard").style.height = "100%"
+        
+    } else {
+        e.style.backgroundColor = ""
+        document.getElementById("dashboard").style.opacity = "0%"
+        document.getElementById("dashboard").style.height = "0%"
+    }
+
+    window.history.pushState(null, null, `/dashboard/${guild.id}`)
+
+}
 
 async function closeAll(element) {
     var bodyItems = document.getElementById("body").querySelectorAll(".body-item"); 
@@ -214,7 +306,7 @@ async function closeAll(element) {
 
 async function loadSettings(settings) {
     if (!settings) {
-        settings = await get(`${address}/api/dashboard/${currentGuild.id}/settings`)
+        settings = await request("GET", `${address}/api/dashboard/${currentGuild.id}/settings`)
     }
     
     document.getElementById("dashboard-settings-prefix").value = settings.prefix
@@ -236,6 +328,8 @@ async function openSettings(e) {
         document.getElementById("dashboard-settings").style.opacity = "0%"
         document.getElementById("dashboard-settings").style.height = "0%"
     }
+
+    window.history.pushState(null, null, `/dashboard/${guild.id}/settings`)
 }
 
 document.getElementById("dashboard-settings-prefix").oninput = async function(e) {
@@ -244,7 +338,7 @@ document.getElementById("dashboard-settings-prefix").oninput = async function(e)
 
 async function loadLogs(logs) {
     if (!logs) {
-        logs = await get(`${address}/api/dashboard/${currentGuild.id}/logs`)
+        logs = await request("GET", `${address}/api/dashboard/${currentGuild.id}/logs`)
     }
     
     table = document.getElementById("dashboard-logs-table")
@@ -298,5 +392,64 @@ async function openLogs(e) {
         document.getElementById("dashboard-logs").style.height = 0
 
     }
+
+    window.history.pushState(null, null, `/dashboard/${guild.id}/logs`)
 }
 
+document.getElementById("dashboard-logs-clear").onclick = async function() {
+    data = await saveNoTime("DELETE", `${address}/api/dashboard/${currentGuild.id}/logs`)
+    await loadLogs(data.data)
+}
+
+async function loadTracking(tracking) {
+    if (!tracking) {
+        tracking = await request("GET", `${address}/api/dashboard/${currentGuild.id}/tracking`)
+    }
+
+    currentGuildData.modules = tracking.modules
+
+    await doModules(currentGuildData.modules)
+
+    if (tracking.modules.includes("tracking")) {
+
+        document.getElementById("modules-tracking-title").classList.remove("disabled")
+
+        document.getElementById("modules-tracking-enable").style.backgroundColor = "var(--fail)"
+        document.getElementById("modules-tracking-enable-label").innerText = "Disable"
+    } else {
+        document.getElementById("modules-tracking-title").classList.add("disabled")
+
+        document.getElementById("modules-tracking-enable").style.backgroundColor = "var(--success)"
+        document.getElementById("modules-tracking-enable-label").innerText = "Enable"
+    }
+}
+
+async function openTracking(e) {
+    if (document.getElementById("dashboard-modules-tracking").style.opacity != 1) {
+        await closeAll(document.getElementById("dashboard-modules-tracking"))
+        await loadTracking()
+
+        e.style.backgroundColor = "rgb(255, 255, 255, 0.2)"
+        document.getElementById("dashboard-modules-tracking").style.opacity = "100%"
+        document.getElementById("dashboard-modules-tracking").style.height = "100%"
+        
+    } else {
+        e.style.backgroundColor = ""
+        document.getElementById("dashboard-modules-tracking").style.opacity = "0%"
+
+        document.getElementById("dashboard-modules-tracking").style.height = 0
+    }
+
+    window.history.pushState(null, null, `/dashboard/${guild.id}/modules-tracking`)
+}
+
+document.getElementById("modules-tracking-enable").onclick = async function() {
+    if (currentGuildData.modules.includes("tracking")) {
+        tracking = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/tracking`, {enabled:false})
+    } else {
+        tracking = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/tracking`, {enabled:true})
+    }
+
+    await loadTracking(tracking.data)
+    
+}

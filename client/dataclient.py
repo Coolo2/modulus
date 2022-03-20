@@ -4,7 +4,10 @@ import setup
 
 import time 
 import datetime
-import asyncio
+
+import modules.tracking.data
+
+import json
 
 class Log():
     def __init__(self, client, data : tuple):
@@ -32,6 +35,8 @@ class Log():
 class DataClient():
     def __init__(self, client):
         self.client = client
+
+        self.module_tracking = modules.tracking.data.DataModule(self.client)
     
     async def get_prefix(self, guild : discord.Guild):
 
@@ -49,7 +54,7 @@ class DataClient():
             await self.client.file.db.db.execute("CREATE TABLE prefix(guild_id INTEGER, prefix STRING)")
 
         if await self.client.file.db.row_exists_with_value("prefix", "guild_id", guild.id):
-            await self.client.file.db.db.execute(f"UPDATE prefix SET prefix=? WHERE guild_id=?", [new_prefix, guild.id])
+            await self.client.file.db.db.execute("UPDATE prefix SET prefix=? WHERE guild_id=?", [new_prefix, guild.id])
         else:
             await self.client.file.db.db.execute("INSERT INTO prefix(guild_id, prefix) VALUES (?, ?);", [guild.id, new_prefix])
 
@@ -76,4 +81,57 @@ class DataClient():
             all.append(Log(self.client, log))
         
         return reversed(all)
+    
+    async def clear_logs(self, guild : discord.Guild):
+        if not await self.client.file.db.table_exists("logs"):
+            await self.client.file.db.db.execute("CREATE TABLE logs(guild_id INTEGER, time INTEGER, user_id INTEGER, user STRING, type STRING, description STRING)")
+        
+        cursor = await self.client.file.db.db.execute("DELETE FROM logs WHERE guild_id=?", [guild.id])
+        
+        return cursor
+    
+    async def get_modules(self, guild : discord.Guild) -> list:
+        if not await self.client.file.db.table_exists("modules"):
+            await self.client.file.db.db.execute("CREATE TABLE modules(guild_id INTEGER, modules STRING)")
+        
+        cursor = await self.client.file.db.db.execute("SELECT modules FROM modules WHERE guild_id=?", (guild.id,))
+        modules = await cursor.fetchone()
+
+        return json.loads(modules[0]) if modules else []
+
+    async def enable_module(self, guild : discord.Guild, module_name : str):
+        if not await self.client.file.db.table_exists("modules"):
+            await self.client.file.db.db.execute("CREATE TABLE modules(guild_id INTEGER, modules STRING)")
+        
+        if await self.client.file.db.row_exists_with_value("modules", "guild_id", guild.id):
+
+            modules = await self.get_modules(guild)
+
+            if module_name not in modules:
+                modules.append(module_name)
+
+                await self.client.file.db.db.execute("UPDATE modules SET modules=? WHERE guild_id=?", [json.dumps(modules), guild.id])
+        else:
+            await self.client.file.db.db.execute("INSERT INTO modules(guild_id, modules) VALUES (?, ?);", [guild.id, json.dumps([module_name])])
+    
+    async def disable_module(self, guild : discord.Guild, module_name : str):
+        if not await self.client.file.db.table_exists("modules"):
+            await self.client.file.db.db.execute("CREATE TABLE modules(guild_id INTEGER, modules STRING)")
+        
+        if await self.client.file.db.row_exists_with_value("modules", "guild_id", guild.id):
+
+            modules = await self.get_modules(guild)
+
+            if module_name in modules:
+                modules.remove(module_name)
+
+                await self.client.file.db.db.execute("UPDATE modules SET modules=? WHERE guild_id=?", [json.dumps(modules), guild.id])
+        else:
+            await self.client.file.db.db.execute("INSERT INTO modules(guild_id, modules) VALUES (?, ?);", [guild.id, json.dumps([module_name])])
+    
+    async def module_enabled(self, guild : discord.Guild, module_name : str):
+
+        return module_name in await self.get_modules(guild)
+    
+
 

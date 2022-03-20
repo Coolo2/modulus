@@ -15,10 +15,13 @@ class FileClient():
     
     async def initialise_databases(self):
         self.db = Database(self, "data.db")
+        self.tracking = Database(self, "tracking.db")
 
         await self.db.initialise()
+        await self.tracking.initialise()
 
         self.databases.append(self.db)
+        self.databases.append(self.tracking)
 
     async def sync_databases(self):
         
@@ -27,8 +30,6 @@ class FileClient():
             await database.reload()
 
             data = await self.client.http.post_file(url=database.url_post, file_name=database.name, file_path=database.path)
-
-            print(f"done {database.path} {data.status}")
 
 class Database():
 

@@ -7,14 +7,14 @@ from discord import app_commands
 import discord 
 import setup
 from web import web
-import os
 
+
+import modules.tracking.overwrites
+
+from discord import Client as DisClient
 from discord.ext import tasks
 
-
-
-intents = discord.Intents.default()
-intents.message_content = True
+intents = discord.Intents.all()
 
 async def get_prefix(bot : commands.Bot, message : discord.Message):
 
@@ -22,29 +22,22 @@ async def get_prefix(bot : commands.Bot, message : discord.Message):
     return commands.when_mentioned_or(prefix, prefix.upper(), prefix.capitalize())(bot, message)
 
 
-bot = commands.Bot(command_prefix=get_prefix, intents=intents)
+bot : DisClient | commands.Bot = commands.Bot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
 client = Client(bot)
 
-tree = app_commands.CommandTree(bot)
-extensions = [file.replace(".py", "") for file in os.listdir('./cogs') if file.endswith(".py")]
+tree : app_commands.CommandTree = bot.tree
 
-bot.tree = tree
+
 bot.client = client 
 
 refresh_commands = False
 
 @bot.event 
 async def on_connect():
-    await bot.client.file.initialise_databases()
+    await client.file.initialise_databases()
 
 @bot.event 
 async def on_ready():
-
-
-    guild = bot.get_guild(450914634963353600)
-    user = await bot.fetch_user(368071242189897728)
-
-    print(await client.data.get_logs(guild))
 
     await bot.change_presence(activity=discord.Activity(name=f"/help | v{version.versions[0].name}", type=discord.ActivityType.playing))
     print(f"{bot.user} online.")
@@ -57,11 +50,21 @@ async def on_ready():
 
     await bridge.sync(bot, tree, refresh_commands)
 
-@tasks.loop(seconds=60 if setup.production else 15)
+@tasks.loop(seconds=client.loop_seconds)
 async def regular_task():
-    await bot.client.file.sync_databases()
+    await client.file.sync_databases()
 
-for extension in extensions:
-    bot.load_extension(f"cogs.{extension}")
+    await modules.tracking.overwrites.task(client)
+
+async def setup_hook():
+    for module in client.moduleNames:
+        try:
+            await bot.load_extension(f"modules.{module}.cog")
+
+            print("Loaded", module)
+        except Exception as e:
+            print("Extension not loaded: " + str(e))
+
+bot.setup_hook = setup_hook
 
 bot.run(setup.env("token"))

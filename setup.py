@@ -19,3 +19,7 @@ identify = f"https://discord.com/api/oauth2/authorize?client_id={application_id}
 client_secret = env("client_secret")
 
 slash_guild = discord.Object(450914634963353600)
+
+embed = 0x2F3136
+embedFail = 0xFF0000
+embedSuccess = 0x32CD32

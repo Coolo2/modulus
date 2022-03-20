@@ -2,7 +2,7 @@
     <head>
         <link rel="stylesheet" href="/static/css/global.css">
         <link rel="stylesheet" href="/static/css/dashboard.css">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <title>Modulus - Dashboard</title>
         <link rel="icon" type="image/x-icon" href="/static/images/icon.jpeg">
     </head>
@@ -13,17 +13,31 @@
         
 
         <div class="modules" id="modules">
-            <div style="display:none" id="modules-hider">
+            <div style="display:none" id="modules-hider" class="noselect">
                 <div class="modules-section">
-                    Bot
+                    <div class="horizontal-center">General </div>
+                </div>
+                <div class="modules-item noseleect" onclick="openHome(this)" id="home"><i class="fas fa-home"></i><span class="modules-item-text">Home</span></div>
+                <div class="modules-section">
+                    <div class="horizontal-center">Bot </div>
                 </div>
                 <div class="modules-item noseleect" onclick="openSettings(this)" id="settings"><i class="fa fa-cog modules-item-icon"></i><span class="modules-item-text">Settings</span></div>
                 <div class="modules-item noseleect" onclick="openLogs(this)" id="logs"><i class="fa fa-clipboard-list modules-item-icon"></i><span class="modules-item-text">Logs</span></div>    
+                <div class="modules-section">
+                    <div class="horizontal-center">Modules </div>
+                </div>
+                <div class="modules-item noseleect" onclick="openTracking(this)" id="modules-tracking" style="color:var(--general-color)"><i class="fas fa-flag-checkered"></i><span class="modules-item-text">Tracking</span></div>
             </div>
         </div>
         <div class="body" id="body">
-            <div class="loader" style="margin:15px;right:0;position: absolute;opacity:0"></div>
+            <div class="loader" style="margin:15px;right:0;position: absolute;opacity:0" id="dashboard-loader"></div>
+            <div class="progress" style="position:absolute;right:15px;top:15px;z-index:15">
+                <div class="progress-bar" id="body-progress"></div>
+            </div>
 
+            <div class="body-item" id="dashboard">
+                <div class="title" style="margin:15px">Dashboard Home</div>
+            </div>
             <div class="body-item" id="dashboard-settings">
                 <div class="title" style="margin:15px">Server Settings</div>
                 <div class="body-item-section">
@@ -34,9 +48,32 @@
                 </div>
             </div>
             <div class="body-item" id="dashboard-logs">
-                <div class="title" style="margin:15px">Modulus Logs</div>
+                <div class="title" style="margin:15px">Modulus Logs 
+                    <span>
+                        <a class="button-primary" style="position:absolute;margin-left:25px" id="dashboard-logs-clear">
+                            <span class="all-center noselect" style="font-size:150%">
+                                Clear
+                            </span>
+                        </a>
+                    </span>
+                </div>
+                <div class="description" style="margin:15px">Logs for all changes to settings, moderation uses and more related to Modulus.</div>
                 <div class="body-item-section">
                     <table class="body-item-table" id="dashboard-logs-table"></table>
+                </div>
+                
+            </div>
+            <div class="body-item" id="dashboard-modules-tracking">
+                <div class="title" style="margin:15px">
+                    
+                    <span id="modules-tracking-title">Status Tracking</span>
+                    <a class="button-primary noselect" style="position:absolute;margin-left:25px;" id="modules-tracking-enable">
+                        <span class="all-center noselect" style="font-size:150%" id="modules-tracking-enable-label">
+                        </span>
+                    </a>
+
+                    
+                
                 </div>
                 
             </div>
@@ -44,22 +81,23 @@
         </div>
 
         <div class="title" style="position:absolute;top:140px;left:50px;">
-            Dashboard - Guild
+            Dashboard - Server
         </div>
         <div class="dropdown noselect" style="position:absolute;top:138px;left:500px;box-shadow:0 0 10px black;" id="dropdown-guild">
             <span class="vertical-center" id="dropdown-guild" style="left:15px">Select a server</span>
             <i class="fas fa-chevron-down vertical-center" style="right:15px" id="dropdown-guild"></i>
-            
         </div>
         <div id="dropdown-guild-menu" class="dropdown-menu" style="position:absolute;top:188px;left:500px;">
             <div class="loader" style="margin:15px"></div>
         </div>
 
+        <div class="loader" style="position:absolute;top:148px;left:770px;box-shadow:0 0 5px rgb(0, 0, 0, 0.5);" id="dropdown-guild-loader"></div>
+
         <div class="topper" style="height:200px;"><div class="topper-fade"></div></div>
         
         <div class="navBar">
             <a href="/">
-                <img style="left:calc(15% - 70px)" class="vertical-center navBar-image" src="/static/images/icon.jpeg" draggable="false" onmousedown="return false" >
+                <img style="left:calc(15% - 70px)" class="vertical-center navBar-image" src="/static/images/icon.jpeg" draggable="false" onmousedown="" >
                 <span style="left:15%" class="vertical-center navBar-title noselect">Modulus</span>
             </a>
 
@@ -73,7 +111,7 @@
             <a class="navBar-item vertical-center noselect" style="left:calc(15% + 450px)" href="/status"><span style="padding:10px">Status</span></a>
 
             <a class="navBar-item vertical-center noselect" style="right:10%;opacity:0;transition:opacity .1s" id="profile">
-                <span><img style="left:calc(15% - 70px);" class="vertical-center navBar-image" draggable="false" onmousedown="return false" id="profile-avatar"></span>
+                <span><img style="left:calc(15% - 70px);" class="vertical-center navBar-image" draggable="false" onmousedown="" id="profile-avatar"></span>
                 <span id="profile-name" style="margin-left:15px">Name#1234</span>
                 <span><i class="fas fa-caret-down" style="transition:transform .2s" id="profile-dropdown"></i></span>
             </a>

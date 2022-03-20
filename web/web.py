@@ -190,6 +190,9 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
             
             if data["prefix"].replace(" ", "") == "":
                 data["prefix"] = setup.default_prefix
+            
+            if data["prefix"] == await client.data.get_prefix(guild):
+                return quart.jsonify({"error":True, "message":"Prefix not changed.", "data":await get_settings(guild)})
 
             await client.data.set_prefix(guild, data["prefix"])
 
@@ -211,7 +214,68 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         logs = await get_logs(guild)
 
         return quart.jsonify(logs)
+    
+    @app.route("/api/dashboard/<path:guild_id>/logs", methods=["DELETE"])
+    async def clear_dashboard_logs(guild_id : int):
+        data = await quart.request.json
+        guild = bot.get_guild(int(guild_id))
 
+        member : discord.Member = await guild.fetch_member(int(data["user"]))
+
+        if not member.guild_permissions.manage_guild:
+            return quart.jsonify({"error":True, "message":"Missing permissions."})
+
+        await client.data.clear_logs(guild)
+
+        return quart.jsonify({"error":False, "message":"Successfully cleared logs", "data":await get_logs(guild)})
+
+    async def dashboard_home(guild : discord.Guild):
+
+        return {"modules": await client.data.get_modules(guild)}
+
+    @app.route("/api/dashboard/<path:guild_id>", methods=["GET"])
+    async def dashboard_home_get(guild_id : int):
+        
+        guild = bot.get_guild(int(guild_id))
+
+        return quart.jsonify(await dashboard_home(guild))
+    
+    async def get_tracking(guild : discord.Guild):
+        
+        return {"modules":await client.data.get_modules(guild)}
+    
+    @app.route("/api/dashboard/<path:guild_id>/tracking", methods=["GET"])
+    async def dashboard_tracking(guild_id : int):
+
+        guild = bot.get_guild(int(guild_id))
+
+        tracking = await get_tracking(guild)
+
+        return quart.jsonify(tracking)
+    
+    @app.route("/api/dashboard/<path:guild_id>/tracking", methods=["POST"])
+    async def save_tracking_settings(guild_id : int):
+
+        data = await quart.request.json
+        guild = bot.get_guild(int(guild_id))
+
+        member : discord.Member = await guild.fetch_member(int(data["user"]))
+
+        if "enabled" in data:
+
+            if not member.guild_permissions.manage_guild:
+                return quart.jsonify({"error":True, "message":"Missing permissions."})
+
+            if data["enabled"] == True:
+                await client.data.enable_module(guild, "tracking")
+                await client.data.add_log(guild, member, "MODULE_ENABLED", f"{member} enabled module 'tracking'")
+
+                return quart.jsonify({"error":False, "message":"Successfully enabled module", "data":await get_tracking(guild)})
+            else:
+                await client.data.disable_module(guild, "tracking")
+                await client.data.add_log(guild, member, "MODULE_DISABLED", f"{member} disabled module 'tracking'")
+
+                return quart.jsonify({"error":False, "message":"Successfully disabled module", "data":await get_tracking(guild)})
         
 
     return app
