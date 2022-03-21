@@ -235,7 +235,6 @@ async function save(url, data, func) {
     clearTimeout(timer);
     // Sets new timer that may or may not get cleared
     timer = setTimeout(async () => {
-        data.user = profileData.id
 
         returned = await request("POST", url, data)
 
@@ -414,13 +413,22 @@ async function loadTracking(tracking) {
 
         document.getElementById("modules-tracking-title").classList.remove("disabled")
 
-        document.getElementById("modules-tracking-enable").style.backgroundColor = "var(--fail)"
+        document.getElementById("modules-tracking-enable").className = "button-danger noselect"
         document.getElementById("modules-tracking-enable-label").innerText = "Disable"
+
+        document.getElementById("modules-tracking-text").classList = ""
+
+        document.getElementById("modules-tracking-totalOnline").innerText = tracking.total_online
+        document.getElementById("modules-tracking-totalTracked").innerText = tracking.total_tracked
     } else {
         document.getElementById("modules-tracking-title").classList.add("disabled")
 
-        document.getElementById("modules-tracking-enable").style.backgroundColor = "var(--success)"
+        document.getElementById("modules-tracking-enable").className = "button-success noselect"
         document.getElementById("modules-tracking-enable-label").innerText = "Enable"
+        document.getElementById("modules-tracking-text").classList = "disabled"
+
+        document.getElementById("modules-tracking-totalOnline").innerText = 0
+        document.getElementById("modules-tracking-totalTracked").innerText = 0
     }
 }
 

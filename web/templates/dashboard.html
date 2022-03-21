@@ -26,7 +26,10 @@
                 <div class="modules-section">
                     <div class="horizontal-center">Modules </div>
                 </div>
-                <div class="modules-item noseleect" onclick="openTracking(this)" id="modules-tracking" style="color:var(--general-color)"><i class="fas fa-flag-checkered"></i><span class="modules-item-text">Tracking</span></div>
+                <div class="modules-item noseleect" onclick="openTracking(this)" id="modules-tracking" style="color:var(--general-color)">
+                    <div class="modules-item-new">new!</div>
+                    <i class="fas fa-flag-checkered"></i><span class="modules-item-text">Tracking</span>
+                </div>
             </div>
         </div>
         <div class="body" id="body">
@@ -71,9 +74,13 @@
                         <span class="all-center noselect" style="font-size:150%" id="modules-tracking-enable-label">
                         </span>
                     </a>
-
-                    
-                
+                </div>
+                <div id="modules-tracking-text" style="margin-left:15px;">
+                    <span style="font-family:Nunito;font-size:var(--font-size)">Total Online Time: </span>
+                    <span id="modules-tracking-totalOnline"></span>
+                    <br>
+                    <span style="font-family:Nunito;font-size:var(--font-size)">Total Tracked Time: </span>
+                    <span id="modules-tracking-totalTracked"></span>
                 </div>
                 
             </div>

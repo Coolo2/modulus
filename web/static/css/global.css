@@ -10,7 +10,7 @@
 
     --primary:#5865F2;
     --success:#43B581;
-    --fail:#F04747;
+    --danger:#F04747;
     --font-size:15px
 }
 
@@ -172,7 +172,7 @@ address {
     background-color:var(--background-color);
 }
 
-.button-primary {
+.button-primary, .button-danger, .button-success {
     background-color:var(--primary);
     width:175px;
     height:50px;
@@ -183,8 +183,16 @@ address {
     box-shadow:0 0 10px black;
     text-shadow:none;
     cursor:pointer;
-    transition:border-radius .1s, filter .1s, opacity 1s, transform 1s, box-shadow .2s;
+    transition:border-radius .05s, filter .05s, opacity 1s, transform 1s, box-shadow .05s;
     text-decoration:none;
+}
+
+.button-danger {
+    background-color:var(--danger)
+}
+
+.button-success {
+    background-color:var(--success)
 }
 
 .button-primary:hover {

@@ -76,11 +76,11 @@ class DataClient():
         cursor = await self.client.file.db.db.execute("SELECT * FROM logs WHERE guild_id=?", [guild.id])
         logs = await cursor.fetchall()
 
-        all = []
+        all_logs = []
         for log in logs:
-            all.append(Log(self.client, log))
+            all_logs.append(Log(self.client, log))
         
-        return reversed(all)
+        return reversed(all_logs)
     
     async def clear_logs(self, guild : discord.Guild):
         if not await self.client.file.db.table_exists("logs"):
@@ -91,47 +91,72 @@ class DataClient():
         return cursor
     
     async def get_modules(self, guild : discord.Guild) -> list:
-        if not await self.client.file.db.table_exists("modules"):
-            await self.client.file.db.db.execute("CREATE TABLE modules(guild_id INTEGER, modules STRING)")
+        if not await self.client.file.db.table_exists("settings"):
+            await self.client.file.db.db.execute("CREATE TABLE settings(guild_id INTEGER, settings STRING, modules STRING)")
         
-        cursor = await self.client.file.db.db.execute("SELECT modules FROM modules WHERE guild_id=?", (guild.id,))
+        cursor = await self.client.file.db.db.execute("SELECT modules FROM settings WHERE guild_id=?", (guild.id,))
         modules = await cursor.fetchone()
 
         return json.loads(modules[0]) if modules else []
 
     async def enable_module(self, guild : discord.Guild, module_name : str):
-        if not await self.client.file.db.table_exists("modules"):
-            await self.client.file.db.db.execute("CREATE TABLE modules(guild_id INTEGER, modules STRING)")
+        if not await self.client.file.db.table_exists("settings"):
+            await self.client.file.db.db.execute("CREATE TABLE settings(guild_id INTEGER, settings STRING, modules STRING)")
         
-        if await self.client.file.db.row_exists_with_value("modules", "guild_id", guild.id):
+        if await self.client.file.db.row_exists_with_value("settings", "guild_id", guild.id):
 
             modules = await self.get_modules(guild)
 
             if module_name not in modules:
                 modules.append(module_name)
 
-                await self.client.file.db.db.execute("UPDATE modules SET modules=? WHERE guild_id=?", [json.dumps(modules), guild.id])
+                await self.client.file.db.db.execute("UPDATE settings SET modules=? WHERE guild_id=?", [json.dumps(modules), guild.id])
         else:
-            await self.client.file.db.db.execute("INSERT INTO modules(guild_id, modules) VALUES (?, ?);", [guild.id, json.dumps([module_name])])
+            await self.client.file.db.db.execute("INSERT INTO settings(guild_id, settings, modules) VALUES (?, ?, ?);", [guild.id, json.dumps({}), json.dumps([module_name])])
     
     async def disable_module(self, guild : discord.Guild, module_name : str):
-        if not await self.client.file.db.table_exists("modules"):
-            await self.client.file.db.db.execute("CREATE TABLE modules(guild_id INTEGER, modules STRING)")
+        if not await self.client.file.db.table_exists("settings"):
+            await self.client.file.db.db.execute("CREATE TABLE settings(guild_id INTEGER, settings STRING, modules STRING)")
         
-        if await self.client.file.db.row_exists_with_value("modules", "guild_id", guild.id):
+        if await self.client.file.db.row_exists_with_value("settings", "guild_id", guild.id):
 
             modules = await self.get_modules(guild)
 
             if module_name in modules:
                 modules.remove(module_name)
 
-                await self.client.file.db.db.execute("UPDATE modules SET modules=? WHERE guild_id=?", [json.dumps(modules), guild.id])
+                await self.client.file.db.db.execute("UPDATE settings SET modules=? WHERE guild_id=?", [json.dumps(modules), guild.id])
         else:
-            await self.client.file.db.db.execute("INSERT INTO modules(guild_id, modules) VALUES (?, ?);", [guild.id, json.dumps([module_name])])
+            await self.client.file.db.db.execute("INSERT INTO settings(guild_id, settings, modules) VALUES (?, ?, ?);", [guild.id, json.dumps({}), json.dumps([module_name])])
     
+    async def get_user_setting(self, user : discord.User, setting_name : str, every=False):
+        if not await self.client.file.db.table_exists("user_settings"):
+            await self.client.file.db.db.execute("CREATE TABLE user_settings(user_id INTEGER, settings STRING)")
+        
+        cursor = await self.client.file.db.db.execute("SELECT settings FROM user_settings WHERE user_id=?", [user.id])
+        settings = await cursor.fetchone()
+
+        if every:
+            return json.loads(settings[0]) if settings else {}
+
+        return json.loads(settings[0])[setting_name] if settings and setting_name in json.loads(settings[0]) else None
+        
+    
+    async def set_user_setting(self, user : discord.User, setting_name : str, setting_value):
+        if not await self.client.file.db.table_exists("user_settings"):
+            await self.client.file.db.db.execute("CREATE TABLE user_settings(user_id INTEGER, settings STRING)")
+        
+        if await self.client.file.db.row_exists_with_value("user_settings", "user_id", user.id):
+
+            settings = await self.get_user_setting(user, setting_name, every=True)
+
+            settings[setting_name] = setting_value
+
+            await self.client.file.db.db.execute("UPDATE user_settings SET settings=? WHERE user_id=?", [json.dumps(settings), user.id])
+        else:
+            await self.client.file.db.db.execute("INSERT INTO user_settings(user_id, settings) VALUES (?, ?);", [user.id, json.dumps({setting_name:setting_value})])
+
+
     async def module_enabled(self, guild : discord.Guild, module_name : str):
 
         return module_name in await self.get_modules(guild)
-    
-
-

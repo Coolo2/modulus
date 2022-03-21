@@ -67,10 +67,7 @@ notifications = {
 async function get(url) {
 
     const settings = {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        method: 'GET'
     };
 
     try {
@@ -89,7 +86,7 @@ async function request(method, url, data) {
     var settings = {
         method: method,
         headers: {
-            'Content-Type': 'application/json'
+            "Content-Type":"application/json"
         }
     };
 

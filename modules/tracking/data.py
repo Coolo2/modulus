@@ -33,11 +33,27 @@ class User():
         self.types[name]["total"] += self.client.loop_seconds
         self.types[name]["last"] = datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
     
+    async def add_activity(self, name : str):
+
+        if name not in self.activities:
+            self.activities[name] = {"total":0}
+            
+        self.activities[name]["total"] += self.client.loop_seconds
+        self.activities[name]["last"] = datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
+    
+    async def add_platform(self, name : str):
+
+        if name not in self.platforms:
+            self.platforms[name] = {"total":0}
+            
+        self.platforms[name]["total"] += self.client.loop_seconds
+        self.platforms[name]["last"] = datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
+    
     async def save(self):
 
-        if await self.client.file.tracking.row_exists_with_value("all_time", "user_id", self.user_id):
+        if await self.client.file.tracking.row_exists_with_value(self.table, "user_id", self.user_id):
             await self.client.file.tracking.db.execute(
-                "UPDATE all_time SET activities=?, types=?, platforms=?, spotify=?, messages=?, voice=? WHERE user_id=?", 
+                f"UPDATE {self.table} SET activities=?, types=?, platforms=?, spotify=?, messages=?, voice=? WHERE user_id=?", 
                 [
                     json.dumps(self.activities),
                     json.dumps(self.types),
@@ -62,17 +78,20 @@ class User():
                 ]
             )
 
+timeframes = ["all_time", "month", "week", "day"]
 
 class DataModule():
     def __init__(self, client : Client):
 
         self.client = client
+
+        self.timeframes = timeframes
     
     async def check_create_table(self, name : str):
 
-        # user_id : 000000000000000000
+        # user_id : 000000000000000000 DONE
         # activities : {"activity_name":{"duration":0, "last_seen":"DateTime"}, ...}
-        # types : {"online":{"duration":0, "last_seen":"DateTime"}, ...}
+        # types : {"online":{"duration":0, "last_seen":"DateTime"}, ...} DONE
         # platforms : {"desktop":{"duration":0, "last_seen":"DateTime"}, ...}
         # spotify : {"track_id":duration:0}
         # messages : {"guild_id":{"channel_id":0, ...}, ...}
@@ -89,6 +108,40 @@ class DataModule():
         data = await cursor.fetchone()
 
         return User(self.client, user_id, table, data)
+    
+    async def clear_table(self, table : str):
+
+        await self.client.file.tracking.db.execute(f"DELETE FROM {table}")
+    
+    async def do_timeframes(self):
+        if not await self.client.file.tracking.table_exists("data"):
+            await self.client.file.tracking.db.execute("CREATE TABLE data(timeframe STRING, last_reloaded STRING)")
+
+        dtToday = datetime.datetime.today()
+        day = f"{dtToday.year}/{dtToday.month}/{dtToday.day}"
+
+        for tf in self.timeframes:
+
+            if not await self.client.file.tracking.row_exists_with_value("data", "timeframe", tf):
+                await self.client.file.tracking.db.execute("INSERT INTO data(timeframe, last_reloaded) VALUES (?, ?);", [tf, day])
+
+            cursor = await self.client.file.tracking.db.execute("SELECT last_reloaded FROM data WHERE timeframe=?", [tf])
+            timeframe = await cursor.fetchone()
+
+            if tf == "day" and timeframe[0] != day:
+                await self.clear_table("day")
+
+                await self.client.file.tracking.db.execute(f"UPDATE data SET last_reloaded=? WHERE timeframe=?", [day, tf])
+            
+            if tf == "week" and datetime.datetime.strptime(timeframe[0], "%Y/%m/%d").weekday() == 0 and timeframe[0] != day:
+                await self.clear_table("week")
+
+                await self.client.file.tracking.db.execute(f"UPDATE data SET last_reloaded=? WHERE timeframe=?", [day, tf])
+            
+            if tf == "month" and datetime.datetime.strptime(timeframe[0], "%Y/%m/%d").day == 1 and timeframe[0] != day:
+                await self.clear_table("month")
+
+                await self.client.file.tracking.db.execute(f"UPDATE data SET last_reloaded=? WHERE timeframe=?", [day, tf])
     
 
 

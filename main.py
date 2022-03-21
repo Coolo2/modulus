@@ -1,15 +1,14 @@
 from client.client import Client 
 
-from client import version, bridge
-
 from discord.ext import commands
 from discord import app_commands
 import discord 
 import setup
-from web import web
-
+import os
 
 import modules.tracking.overwrites
+from web import web
+from client import version, bridge
 
 from discord import Client as DisClient
 from discord.ext import tasks
@@ -56,7 +55,12 @@ async def regular_task():
 
     await modules.tracking.overwrites.task(client)
 
+extensions = [file.replace(".py", "") for file in os.listdir('./cogs') if file.endswith(".py")]
+
 async def setup_hook():
+    for extension in extensions:
+        await bot.load_extension(f"cogs.{extension}")
+
     for module in client.moduleNames:
         try:
             await bot.load_extension(f"modules.{module}.cog")

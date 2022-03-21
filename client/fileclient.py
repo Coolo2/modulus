@@ -69,6 +69,6 @@ class Database():
     async def reload(self):
         if self.db:
             await self.db.commit()
-            await self.db.close()
-
-        self.db = await aiosqlite.connect(self.path)
+            #await self.db.close()
+        else:
+            self.db = await aiosqlite.connect(self.path)

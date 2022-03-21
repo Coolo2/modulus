@@ -22,11 +22,11 @@ class Client():
 
         self.data = dataclient.DataClient(self)
     
-    async def send(self, ctx : discord.Interaction | commands.Context, content = None, embed = None):
+    async def send(self, ctx : discord.Interaction | commands.Context, content = None, embed = None, ephemeral=False):
 
 
         if isinstance(ctx, discord.Interaction):
-            return await ctx.response.send_message(content=content, embed=embed)
+            return await ctx.response.send_message(content=content, embed=embed, ephemeral=ephemeral)
             
         return await ctx.reply(content=content, embed=embed, mention_author=False)
         

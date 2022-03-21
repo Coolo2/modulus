@@ -14,7 +14,7 @@
 }
 .dropdown-menu {
     width:250px;
-    height:0px;
+    height:0;
     border-left:1px solid black;
     border-right:1px solid black;
     border-bottom:1px solid black;
@@ -75,6 +75,19 @@
 
 .modules-item-text {
     padding-left:15px;
+}
+
+.modules-item-new {
+    background-color:var(--primary);
+    border-radius:10px;
+    font-size:15px;
+    font-family:Nunito;
+    text-transform:uppercase;
+    height:20px;
+    position:absolute;
+    right:15px;
+    font-weight:800;
+    padding:4px 10px;
 }
 
 .modules-section {

@@ -1,3 +1,4 @@
+from calendar import c
 import quart 
 import discord
 from discord.ext import commands
@@ -5,10 +6,15 @@ import setup
 import os
 import urllib.parse
 
+import random
+import secrets
+
 from client import client
 
 from web.oauth import Oauth
 from web import encryption
+
+from modules.tracking import classes as tracking_classes
 
 async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quart:
 
@@ -56,25 +62,26 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         resp = await quart.make_response(quart.redirect("/"))
 
         resp.delete_cookie("code")
+        resp.delete_cookie("reuse_token")
+        resp.delete_cookie("reuse_token_guild")
 
         return resp
     
     @app.route("/api/user/guilds", methods=["GET"])  
     async def user_guilds():
         code = quart.request.cookies.get('code')
+        reuse_token = quart.request.cookies.get("reuse_token_guild")
 
-        if not code:
-            return quart.jsonify({"error":"Not Logged In"})
-
-        if code in userGuilds:
-            if "guilds" in userGuilds[code]:
-                return quart.jsonify(userGuilds[code]["guilds"])
+        if reuse_token in userGuilds and quart.request.args.get("refresh") != "true" :
+            if "guilds" in userGuilds[reuse_token]:
+                return quart.jsonify(userGuilds[reuse_token]["guilds"])
 
         access = await Oauth.refresh_token(code)
 
         if "error" in access:
             return quart.jsonify({"error":"Login invalid"})
 
+        rt = secrets.token_urlsafe(16)
         guild_json = await Oauth.get_user_guilds(access["access_token"])
 
         for i, guild_data in enumerate(guild_json):
@@ -85,36 +92,40 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
             if "in" not in guild_json[i]:
                 guild_json[i]["in"] = False 
 
-        userGuilds[ access["refresh_token"] ] = {"access":access, "guilds":guild_json}
+        userGuilds[ rt ] = {"access":access, "guilds":guild_json}
 
         resp = await quart.make_response(quart.jsonify(guild_json))
         resp.set_cookie("code", access["refresh_token"], max_age=8_760*3600)
+        resp.set_cookie("reuse_token_guild", rt, max_age=8_760*3600)
 
         return resp
 
     @app.route("/api/user", methods=["GET"])  
     async def userinfo():
+        
         code = quart.request.cookies.get('code')
+        reuse_token = quart.request.cookies.get("reuse_token")
 
         if not code:
             return quart.jsonify({"error":"Not Logged In"})
 
-        if code in users:
-            if "user" in users[code]:
-                return quart.jsonify(users[code]["user"])
-
+        if reuse_token in users:
+            if "user" in users[reuse_token]:
+                return quart.jsonify(users[reuse_token]["user"])
+        
+        rt = secrets.token_urlsafe(16)
         access = await Oauth.refresh_token(code)
 
         if "error" in access:
-            print(access)
             return quart.jsonify({"error":"Login invalid"})
 
         user_json = await Oauth.get_user_json(access["access_token"])
 
-        users[ access["refresh_token"] ] = {"access":access, "user":user_json}
+        users[rt] = {"access":access, "user":user_json}
 
         resp = await quart.make_response(quart.jsonify(user_json))
         resp.set_cookie("code", access["refresh_token"], max_age=8_760*3600)
+        resp.set_cookie("reuse_token", rt, max_age=8_760*3600)
 
         return resp
 
@@ -145,13 +156,16 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
     @app.route("/dashboard", methods=["GET"])
     async def dashboard():
-        
+        if not quart.request.cookies.get('code'):
+            return quart.redirect("/login?to=/dashboard")
 
         return await quart.render_template("dashboard.html")
 
-    @app.route("/dashboard/<path:id>", methods=["GET"])
-    async def dashboard_with_id(id):
-        
+    @app.route("/dashboard/<path:guild_id>", methods=["GET"])
+    async def dashboard_with_id(guild_id):
+
+        if not quart.request.cookies.get('code'):
+            return quart.redirect(f"/login?to=/dashboard/{guild_id}")
 
         return await quart.render_template("dashboard.html")
     
@@ -178,7 +192,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         data = await quart.request.json
         guild = bot.get_guild(int(guild_id))
 
-        member : discord.Member = await guild.fetch_member(int(data["user"]))
+        member = await get_member(guild, quart.request)
 
         if "prefix" in data:
 
@@ -220,29 +234,49 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         data = await quart.request.json
         guild = bot.get_guild(int(guild_id))
 
-        member : discord.Member = await guild.fetch_member(int(data["user"]))
+        member = await get_member(guild, quart.request)
 
         if not member.guild_permissions.manage_guild:
             return quart.jsonify({"error":True, "message":"Missing permissions."})
 
         await client.data.clear_logs(guild)
 
+        await client.data.add_log(guild, member, "LOG_CLEAR", f"Logs were cleared by {member}")
+
         return quart.jsonify({"error":False, "message":"Successfully cleared logs", "data":await get_logs(guild)})
 
-    async def dashboard_home(guild : discord.Guild):
+    async def dashboard_home(guild : discord.Guild, member : discord.Member):
 
-        return {"modules": await client.data.get_modules(guild)}
+        return {
+            "modules": await client.data.get_modules(guild),
+            "permissions":{"manage_guild":member.guild_permissions.manage_guild}
+        }
+    
+    async def get_member(guild, request) -> discord.Member:
+        reuse_token = request.cookies.get("reuse_token")
+
+        member : discord.Member = await guild.fetch_member(int(users[reuse_token]["user"]["id"]))
+
+        return member
 
     @app.route("/api/dashboard/<path:guild_id>", methods=["GET"])
     async def dashboard_home_get(guild_id : int):
         
         guild = bot.get_guild(int(guild_id))
+        
+        member = await get_member(guild, quart.request)
 
-        return quart.jsonify(await dashboard_home(guild))
+        return quart.jsonify(await dashboard_home(guild, member))
     
     async def get_tracking(guild : discord.Guild):
-        
-        return {"modules":await client.data.get_modules(guild)}
+
+        g = tracking_classes.Guild(client, "all_time")
+
+        return {
+            "modules":await client.data.get_modules(guild), 
+            "total_online":(await g.total_online(guild.members)).total_seconds(), 
+            "total_tracked":(await g.get_user(random.choice([m.id for m in guild.members if not m.bot]))).total_tracked().total_seconds()
+        }
     
     @app.route("/api/dashboard/<path:guild_id>/tracking", methods=["GET"])
     async def dashboard_tracking(guild_id : int):
@@ -259,7 +293,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         data = await quart.request.json
         guild = bot.get_guild(int(guild_id))
 
-        member : discord.Member = await guild.fetch_member(int(data["user"]))
+        member = await get_member(guild, quart.request)
 
         if "enabled" in data:
 
@@ -271,11 +305,13 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
                 await client.data.add_log(guild, member, "MODULE_ENABLED", f"{member} enabled module 'tracking'")
 
                 return quart.jsonify({"error":False, "message":"Successfully enabled module", "data":await get_tracking(guild)})
-            else:
-                await client.data.disable_module(guild, "tracking")
-                await client.data.add_log(guild, member, "MODULE_DISABLED", f"{member} disabled module 'tracking'")
 
-                return quart.jsonify({"error":False, "message":"Successfully disabled module", "data":await get_tracking(guild)})
+            await client.data.disable_module(guild, "tracking")
+            await client.data.add_log(guild, member, "MODULE_DISABLED", f"{member} disabled module 'tracking'")
+
+            return quart.jsonify({"error":False, "message":"Successfully disabled module", "data":await get_tracking(guild)})
+    
+
         
 
     return app
