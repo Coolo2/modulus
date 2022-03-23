@@ -4,22 +4,6 @@ from discord.ext.commands import core
 from discord import app_commands
 
 import setup
-
-class BridgeCommand():
-
-    def __init__(self, func):
-        self.func = func 
-        
-    
-    def run(self):
-        
-        return self.func()
-
-def bridge_command(func, **kwargs):
-
-    cmd = BridgeCommand(func)
-
-    cmd.run()
     
 async def group_empty_cor(ctx : commands.context.Context):
     
@@ -31,7 +15,7 @@ async def sync(bot : commands.Bot, tree : app_commands.CommandTree, refresh_comm
     commands = tree.get_commands(guild=setup.slash_guild)
 
     for command in commands:
-        if command.commands:
+        if hasattr(command, "commands"):
             # is group 
 
             gr = core.Group(name=command.name, func=group_empty_cor)
@@ -49,6 +33,9 @@ async def sync(bot : commands.Bot, tree : app_commands.CommandTree, refresh_comm
 
             bot.add_command(gr)
         else:
+
+            # is normal slash command
+            
             cmd = core.Command(command.callback)
 
             cmd.cog = command.binding

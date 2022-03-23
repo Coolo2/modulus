@@ -1,24 +1,28 @@
-from calendar import c
+
 import quart 
 import discord
-from discord.ext import commands
 import setup
 import os
 import urllib.parse
-
 import random
 import secrets
+import logging
 
-from client import client
-
+from client import client, data
 from web.oauth import Oauth
 from web import encryption
-
 from modules.tracking import classes as tracking_classes
+
+from discord.ext import commands
+
+
 
 async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quart:
 
     app = quart.Quart(__name__, template_folder=os.path.abspath("./web/templates"), static_folder=os.path.abspath("./web/static"))
+
+    if setup.production:
+        logging.getLogger('quart.serving').setLevel(logging.ERROR)
 
     users = {}
     userGuilds = {}
@@ -111,6 +115,17 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         if reuse_token in users:
             if "user" in users[reuse_token]:
+
+                user_cached = users[reuse_token]["user"]
+                user = client.bot.get_user(int(user_cached["id"]))
+
+                if user:
+                    for key, value in user._to_minimal_user_json().items():
+                        if key == "avatar" or key == "id":
+                            continue
+                        users[reuse_token]["user"][key] = value
+                    
+
                 return quart.jsonify(users[reuse_token]["user"])
         
         rt = secrets.token_urlsafe(16)
@@ -153,13 +168,49 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         resp.set_cookie("code", access["refresh_token"], max_age=8_760*3600)
 
         return resp
+    
+    @app.route("/api/commands", methods=["GET"])
+    async def api_commands():
+
+        modules = data.commands 
+
+        for module_name in modules:
+
+            for i, command_name in enumerate(modules[module_name]):
+                command = client.get_command(command_name)
+
+                if not command:
+                    continue
+
+                options = [
+                    {
+                        "name":parameter.name, 
+                        "description":parameter.description, 
+                        "required":parameter.required, 
+                        "min_value":parameter.min_value, 
+                        "max_value":parameter.max_value,
+                        "type":str(parameter.type.name)
+                    } for parameter in command._params.values()
+                ]
+
+                modules[module_name][i] = {
+                    "name":command_name, 
+                    "description":command.description,
+                    "options":options
+                }
+        
+        return quart.jsonify(modules)
+    
+    @app.route("/commands", methods=["GET"])
+    async def commands():
+        return await quart.render_template("commands.html", address=setup.address)
 
     @app.route("/dashboard", methods=["GET"])
     async def dashboard():
         if not quart.request.cookies.get('code'):
             return quart.redirect("/login?to=/dashboard")
 
-        return await quart.render_template("dashboard.html")
+        return await quart.render_template("dashboard.html", address=setup.address)
 
     @app.route("/dashboard/<path:guild_id>", methods=["GET"])
     async def dashboard_with_id(guild_id):

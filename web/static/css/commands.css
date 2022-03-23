@@ -1,0 +1,22 @@
+
+.modules {
+    width:25%;
+    left:15%;
+    top:250px;
+    position:absolute;
+    background-color:var(--background-highlight);
+    border:1px solid black;
+    border-radius:15px 0 0 15px;
+    height: calc(100% - 270px)
+}
+
+.body {
+    width:calc(45%);
+    left:calc(15% + 25%);
+    top:250px;
+    position:absolute;
+    background-color:var(--background-highlight);
+    border:1px solid black;
+    border-radius:0 15px 15px 0;
+    height: calc(100% - 270px)
+}

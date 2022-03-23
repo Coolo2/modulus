@@ -21,12 +21,10 @@ async def get_prefix(bot : commands.Bot, message : discord.Message):
     return commands.when_mentioned_or(prefix, prefix.upper(), prefix.capitalize())(bot, message)
 
 
-bot : DisClient | commands.Bot = commands.Bot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
+bot : DisClient | commands.Bot = commands.Bot(command_prefix=get_prefix, intents=intents, case_insensitive=True, help_command=None)
 client = Client(bot)
 
 tree : app_commands.CommandTree = bot.tree
-
-
 bot.client = client 
 
 refresh_commands = False
@@ -44,7 +42,6 @@ async def on_ready():
     regular_task.start()
 
     quart_app = await web.generate_app(bot, client)
-
     bot.loop.create_task(quart_app.run_task(host=setup.host, port=setup.port))
 
     await bridge.sync(bot, tree, refresh_commands)

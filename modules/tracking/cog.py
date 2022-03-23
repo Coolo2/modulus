@@ -97,16 +97,15 @@ class TrackingCog(app_commands.Group, commands.Cog):
 
         if await self.client.data.get_user_setting(author, "tracking_disabled"):
             raise errors.MildError("Enable it with **/tracking enable**", title="Tracking is already disabled")
-        else:
 
-            await self.client.data.set_user_setting(author, "tracking_disabled", True)
+        await self.client.data.set_user_setting(author, "tracking_disabled", True)
 
-            embed = discord.Embed(
-                title="Tracking disabled", 
-                description="Tracking successfully **disabled**. Your status will no longer be tracked for server-specific analytics.", 
-                color=s.embedSuccess
-            )
-            embed.set_footer(text="The Modulus team will never read any tracking data. It is purely for user information.")
+        embed = discord.Embed(
+            title="Tracking disabled", 
+            description="Tracking successfully **disabled**. Your status will no longer be tracked for server-specific analytics.", 
+            color=s.embedSuccess
+        )
+        embed.set_footer(text="The Modulus team will never read any tracking data. It is purely for user information.")
 
         if isinstance(ctx, discord.Interaction):
             return await ctx.response.send_message(embed=embed)
@@ -119,16 +118,16 @@ class TrackingCog(app_commands.Group, commands.Cog):
 
         if not await self.client.data.get_user_setting(author, "tracking_disabled"):
             raise errors.MildError("Disable it with **/tracking disable**", title="Tracking is already disabled")
-        else:
 
-            await self.client.data.set_user_setting(author, "tracking_disabled", False)
 
-            embed = discord.Embed(
-                title="Tracking re-enabled", 
-                description="Tracking successfully **enabled**. Your status will now be tracked for user-information (**/summary user**).", 
-                color=s.embedSuccess
-            )
-            embed.set_footer(text="The Modulus team will never read any tracking data. It is purely for user information.")
+        await self.client.data.set_user_setting(author, "tracking_disabled", False)
+
+        embed = discord.Embed(
+            title="Tracking re-enabled", 
+            description="Tracking successfully **enabled**. Your status will now be tracked for user-information (**/summary user**).", 
+            color=s.embedSuccess
+        )
+        embed.set_footer(text="The Modulus team will never read any tracking data. It is purely for user information.")
 
         if isinstance(ctx, discord.Interaction):
             return await ctx.response.send_message(embed=embed)

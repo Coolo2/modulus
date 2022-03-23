@@ -23,3 +23,5 @@ slash_guild = discord.Object(450914634963353600)
 embed = 0x2F3136
 embedFail = 0xFF0000
 embedSuccess = 0x32CD32
+
+description = "Modulus is a module based Discord bot which is one of the must customizable out there."
