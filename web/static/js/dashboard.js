@@ -6,7 +6,14 @@ var guilds = []
 var currentGuild = {}
 var currentGuildData = {}
 
-var moduleList = ["tracking"]
+var commandList = {}
+
+async function getModuleList() {
+    r = await request("GET", `${address}/api/commands`)
+    commandList = r
+}
+
+getModuleList()
 
 async function loadGuild(e) {
     document.getElementById("modules-hider").style.display = "block"
@@ -68,7 +75,8 @@ async function loadGuild(e) {
 }
 
 async function doModules(modules) {
-    for (m of moduleList) {
+    for (m in commandList) {
+        if (m == "default") {continue}
         if (modules.includes(m)) {
             document.getElementById(`modules-${m}`).style.color = "var(--bold-color)"
         } else {
@@ -420,6 +428,16 @@ async function loadTracking(tracking) {
 
         document.getElementById("modules-tracking-totalOnline").innerText = tracking.total_online
         document.getElementById("modules-tracking-totalTracked").innerText = tracking.total_tracked
+
+        document.getElementById("modules-tracking-voice-switch").disabled = false
+
+        if (tracking.disabled_statistics.includes("voice")) {
+            document.getElementById("modules-tracking-voice-switch").checked = false
+            document.getElementById("modules-tracking-voice").style.filter = "brightness(50%)"
+        } else {
+            document.getElementById("modules-tracking-voice").style.filter = "brightness(100%)"
+        }
+
     } else {
         document.getElementById("modules-tracking-title").classList.add("disabled")
 
@@ -429,6 +447,9 @@ async function loadTracking(tracking) {
 
         document.getElementById("modules-tracking-totalOnline").innerText = 0
         document.getElementById("modules-tracking-totalTracked").innerText = 0
+
+        document.getElementById("modules-tracking-voice-switch").disabled = true
+        document.getElementById("modules-tracking-voice").style.filter = "brightness(50%)"
     }
 }
 
@@ -460,4 +481,15 @@ document.getElementById("modules-tracking-enable").onclick = async function() {
 
     await loadTracking(tracking.data)
     
+}
+
+document.getElementById("modules-tracking-voice-switch").onclick = async function(e) {
+    
+    voiceChecked = document.getElementById("modules-tracking-voice-switch").checked 
+
+    disabledModules = []
+    if (!voiceChecked) {disabledModules.push("voice")}
+
+    data = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/tracking`, {disabledStatistics:disabledModules})
+    await loadTracking(data.data)
 }

@@ -156,6 +156,32 @@ class DataClient():
         else:
             await self.client.file.db.db.execute("INSERT INTO user_settings(user_id, settings) VALUES (?, ?);", [user.id, json.dumps({setting_name:setting_value})])
 
+    async def get_guild_setting(self, guild : discord.Guild, setting_name : str, every=False):
+        if not await self.client.file.db.table_exists("settings"):
+            await self.client.file.db.db.execute("CREATE TABLE settings(guild_id INTEGER, settings STRING, modules STRING)")
+        
+        cursor = await self.client.file.db.db.execute("SELECT settings FROM settings WHERE guild_id=?", [guild.id])
+        settings = await cursor.fetchone()
+
+        if every:
+            return json.loads(settings[0]) if settings else {}
+
+        return json.loads(settings[0])[setting_name] if settings and setting_name in json.loads(settings[0]) else None
+        
+    
+    async def set_guild_setting(self, guild : discord.Guild, setting_name : str, setting_value):
+        if not await self.client.file.db.table_exists("settings"):
+            await self.client.file.db.db.execute("CREATE TABLE settings(guild_id INTEGER, settings STRING, modules STRING)")
+        
+        if await self.client.file.db.row_exists_with_value("settings", "guild_id", guild.id):
+
+            settings = await self.get_guild_setting(guild, setting_name, every=True)
+
+            settings[setting_name] = setting_value
+
+            await self.client.file.db.db.execute("UPDATE settings SET settings=? WHERE guild_id=?", [json.dumps(settings), guild.id])
+        else:
+            await self.client.file.db.db.execute("INSERT INTO settings(guild_id, settings, modules) VALUES (?, ?, ?);", [guild.id, json.dumps({setting_name:setting_value}), "{}"])
 
     async def module_enabled(self, guild : discord.Guild, module_name : str):
 

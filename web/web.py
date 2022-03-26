@@ -21,6 +21,8 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
     app = quart.Quart(__name__, template_folder=os.path.abspath("./web/templates"), static_folder=os.path.abspath("./web/static"))
 
+    
+
     if setup.production:
         logging.getLogger('quart.serving').setLevel(logging.ERROR)
 
@@ -323,9 +325,14 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         g = tracking_classes.Guild(client, "all_time")
 
+        disabledStats = await client.data.get_guild_setting(guild, "tracking_disabledStatistics")
+        if not disabledStats:
+            disabledStats = []
+
         return {
             "modules":await client.data.get_modules(guild), 
             "total_online":(await g.total_online(guild.members)).total_seconds(), 
+            "disabled_statistics":disabledStats,
             "total_tracked":(await g.get_user(random.choice([m.id for m in guild.members if not m.bot]))).total_tracked().total_seconds()
         }
     
@@ -346,6 +353,8 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         member = await get_member(guild, quart.request)
 
+        returnValue = None
+
         if "enabled" in data:
 
             if not member.guild_permissions.manage_guild:
@@ -360,7 +369,27 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
             await client.data.disable_module(guild, "tracking")
             await client.data.add_log(guild, member, "MODULE_DISABLED", f"{member} disabled module 'tracking'")
 
-            return quart.jsonify({"error":False, "message":"Successfully disabled module", "data":await get_tracking(guild)})
+            returnValue = quart.jsonify({"error":False, "message":"Successfully disabled module", "data":await get_tracking(guild)})
+        
+        if "disabledStatistics" in data:
+
+            if not member.guild_permissions.manage_guild:
+                return quart.jsonify({"error":True, "message":"Missing permissions."})
+            
+            allowedStatistics = ["voice"]
+            newStatisticsDisabled = []
+
+            for stat in data["disabledStatistics"]:
+                if stat in allowedStatistics:
+                    newStatisticsDisabled.append(stat)
+            
+            await client.data.set_guild_setting(guild, "tracking_disabledStatistics", newStatisticsDisabled)
+            await client.data.add_log(guild, member, "MODULE_UPDATED", f"{member} updated disabled statistics for module 'tracking'")
+            
+            returnValue = quart.jsonify({"error":False, "message":"Successfully set statistics toggles", "data":await get_tracking(guild)})
+
+        
+        return returnValue
     
 
         

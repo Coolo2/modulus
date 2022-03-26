@@ -7,6 +7,7 @@ import setup
     
 async def group_empty_cor(ctx : commands.context.Context):
     
+    
     if ctx.invoked_subcommand is None:
         await ctx.send(f'Invalid subcommand pased. Try using `/{ctx.command.name}`')
 
@@ -18,11 +19,11 @@ async def sync(bot : commands.Bot, tree : app_commands.CommandTree, refresh_comm
         if hasattr(command, "commands"):
             # is group 
 
-            gr = core.Group(name=command.name, func=group_empty_cor)
+            gr = core.group(name=command.name)(func=group_empty_cor)
 
             for command_child in command.commands:
 
-                cmd = core.Command(command_child.callback)
+                cmd = core.command(name=command_child.name)(func=command_child.callback)
 
                 cmd.cog = command_child.binding
 

@@ -59,8 +59,7 @@ function getText(text) {
 
 async function loadCommands() {
     commands = await request("GET", `${address}/api/commands`)
-
-    console.log(commands)
+    all = document.getElementById("all")
 
     for (m_name in commands) {
         // Create module page 
@@ -75,6 +74,15 @@ async function loadCommands() {
         module_page_title.innerText = `Module: ${m_name}`
 
         module_page.appendChild(module_page_title)
+
+        all_page_title = document.createElement("div")
+        all_page_title.style.fontSize = "calc(var(--font-size) + 5px)"
+        all_page_title.style.marginTop = "5px"
+        all_page_title.style.fontFamily = "Nunito"
+        all_page_title.style.marginLeft = "15px"
+        all_page_title.innerText = titleCase(m_name)
+
+        all.appendChild(all_page_title)
 
         for (command of commands[m_name]) {
 
@@ -108,6 +116,7 @@ async function loadCommands() {
             module_page_section.appendChild(module_page_section_description)
 
             module_page.appendChild(module_page_section)
+            all.appendChild(module_page_section.cloneNode(true))
         }
 
         document.getElementById("commands").appendChild(module_page)
@@ -129,6 +138,8 @@ async function loadCommands() {
         document.getElementById("modules").appendChild(module_item)
 
         document.getElementById(m_name).onclick = async function(e) {openPage(e.target, `${e.target.id}-page`)}
+
+        document.getElementById("all-button").click()
 
     }
 }

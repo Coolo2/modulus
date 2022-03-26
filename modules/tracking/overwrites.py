@@ -48,11 +48,24 @@ async def task(client : Client):
                             await user.add_type(member.status.name)
                             
                             for activity in member.activities:
+
+                                if type(activity) == discord.Spotify:
+                                    for artist in activity.artists:
+                                        await user.add_spotify(artist, activity.track_id)
+                                
                                 await user.add_activity(activity.name)
                             
                             for p_name, p_value in platforms.items():
                                 if p_value.name != "offline":
                                     await user.add_platform(p_name)
+                    
+                    if member.voice and member.voice.channel:
+                        await user.add_voice_channel(guild.id, member.voice.channel.id)
+
+
+                            
+
+
 
                     if user:
                         users_checked.append(user)

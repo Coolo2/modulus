@@ -25,13 +25,20 @@ class Client():
 
         self.data = dataclient.DataClient(self)
     
-    async def send(self, ctx : discord.Interaction | commands.Context, content = None, embed = None, view=None, ephemeral=False):
+    async def send(self, ctx : discord.Interaction | commands.Context, content = None, embed = None, view=discord.utils.MISSING, ephemeral=False):
 
 
         if isinstance(ctx, discord.Interaction):
             return await ctx.response.send_message(content=content, embed=embed, view=view, ephemeral=ephemeral)
             
         return await ctx.reply(content=content, embed=embed, view=view, mention_author=False)
+    
+    async def original_message(self, ctx : discord.Interaction | commands.Context, message : discord.Message | None) -> discord.Message:
+
+        if type(message) == discord.Message:
+            return message 
+        else:
+            return await ctx.original_message()
     
     def get_command(self, command_name : str) -> app_commands.Command:
 

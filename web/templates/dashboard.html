@@ -2,6 +2,7 @@
     <head>
         <link rel="stylesheet" href="/static/css/global.css">
         <link rel="stylesheet" href="/static/css/dashboard.css">
+        <link rel="stylesheet" href="/static/css/toggle.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <title>Modulus - Dashboard</title>
         <link rel="icon" type="image/x-icon" href="/static/images/icon.jpeg">
@@ -9,7 +10,7 @@
     <address>{{address}}</address>
     <body>
         
-
+        
         <div class="modules" id="modules">
             <div style="display:none" id="modules-hider" class="noselect">
                 <div class="modules-section">
@@ -79,6 +80,21 @@
                     <br>
                     <span style="font-family:Nunito;font-size:var(--font-size)">Total Tracked Time: </span>
                     <span id="modules-tracking-totalTracked"></span>
+                </div>
+                
+                <div class="subtitle" style="margin:15px">Statistic Toggles</div>
+                <div class="body-item-tile-container">
+                    <div class="body-item-tile" id="modules-tracking-voice">
+                        <div class="title" style="font-size:calc(var(--font-size) * 1.5)">Voice Channel Statistics</div>
+                        <div class="description" style="margin-top:10px;">Displays statistics for user VC time</div>
+
+                        <label for="modules-tracking-voice-switch" class="toggle-switchy body-item-tile-switch" data-style="rounded" style="bottom:15px;right:15px;position:absolute">
+                            <input checked type="checkbox" id="modules-tracking-voice-switch" >
+                            <span class="toggle" id="modules-tracking-voice-switch">
+                                <span class="switch"></span>
+                            </span>
+                        </label>
+                    </div>
                 </div>
                 
             </div>

@@ -2,5 +2,5 @@
 
 commands = {
     "default":["help"],
-    "tracking":["summary user", "tracking enable", "tracking disable"]
+    "tracking":["summary user", "summary spotify", "tracking enable", "tracking disable"]
 }

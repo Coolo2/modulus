@@ -46,10 +46,11 @@ class HTTP():
         
 
     async def json_request(
-        self, method : str, data = None, url = None, params : dict = {}
+        self, method : str, data = None, url = None, params : dict = {}, headers=None
     ):
         
-        headers = self.headers
+        if not headers:
+            headers = self.headers
         if data != None:
             data = json.dumps(data)
 

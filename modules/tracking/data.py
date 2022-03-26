@@ -9,6 +9,8 @@ if typing.TYPE_CHECKING:
 import datetime
 import json
 
+from modules.tracking import spotify
+
 class User():
     def __init__(self, client : Client, user_id : int, table : str, data : tuple):
 
@@ -49,6 +51,29 @@ class User():
         self.platforms[name]["total"] += self.client.loop_seconds
         self.platforms[name]["last"] = datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
     
+    async def add_spotify(self, artist : str, track : str):
+
+        if artist not in self.spotify:
+            self.spotify[artist] = {} 
+        
+        if track not in self.spotify[artist]:
+            self.spotify[artist][track] = 0
+        
+        self.spotify[artist][track] += self.client.loop_seconds
+    
+    async def add_voice_channel(self, guild_id : int, channel_id : int):
+
+        if str(guild_id) not in self.voice:
+            self.voice[str(guild_id)] = {}
+        
+        if str(channel_id) not in self.voice[str(guild_id)]:
+            self.voice[str(guild_id)][str(channel_id)] = {"total":0}
+        
+        self.voice[str(guild_id)][str(channel_id)]["total"] += self.client.loop_seconds
+        self.voice[str(guild_id)][str(channel_id)]["last"] = datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
+
+        
+    
     async def save(self):
 
         if await self.client.file.tracking.row_exists_with_value(self.table, "user_id", self.user_id):
@@ -84,18 +109,19 @@ class DataModule():
     def __init__(self, client : Client):
 
         self.client = client
-
         self.timeframes = timeframes
+
+        self.spotify = spotify.SpotifyClient(self.client)
     
     async def check_create_table(self, name : str):
 
-        # user_id : 000000000000000000 DONE
-        # activities : {"activity_name":{"duration":0, "last_seen":"DateTime"}, ...}
-        # types : {"online":{"duration":0, "last_seen":"DateTime"}, ...} DONE
-        # platforms : {"desktop":{"duration":0, "last_seen":"DateTime"}, ...}
-        # spotify : {"track_id":duration:0}
+        ## user_id : 000000000000000000 DONE
+        ## activities : {"activity_name":{"duration":0, "last_seen":"DateTime"}, ...}
+        ## types : {"online":{"duration":0, "last_seen":"DateTime"}, ...} DONE
+        ## platforms : {"desktop":{"duration":0, "last_seen":"DateTime"}, ...}
+        ## spotify : {"artist_name":{"track_id":0 ...} ... }
         # messages : {"guild_id":{"channel_id":0, ...}, ...}
-        # voice : {"channel_id":{"duration":0, "last_seen":"DateTime"}, ...}
+        ## voice : {"channel_id":{"duration":0, "last_seen":"DateTime"}, ...}
 
         if not await self.client.file.tracking.table_exists(name):
             await self.client.file.tracking.db.execute(f"CREATE TABLE {name}(user_id INTEGER, activities STRING, types STRING, platforms STRING, spotify STRING, messages STRING, voice STRING)")

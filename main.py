@@ -42,7 +42,7 @@ async def on_ready():
     regular_task.start()
 
     quart_app = await web.generate_app(bot, client)
-    bot.loop.create_task(quart_app.run_task(host=setup.host, port=setup.port))
+    bot.loop.create_task(quart_app.run_task(host=setup.host, port=setup.port, use_reloader=False))
 
     await bridge.sync(bot, tree, refresh_commands)
 
@@ -56,6 +56,8 @@ extensions = [file.replace(".py", "") for file in os.listdir('./cogs') if file.e
 
 async def setup_hook():
     for extension in extensions:
+        if extension == "errors":
+            continue
         await bot.load_extension(f"cogs.{extension}")
 
     for module in client.moduleNames:
