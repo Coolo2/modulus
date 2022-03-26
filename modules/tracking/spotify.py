@@ -13,9 +13,9 @@ auth = 'https://accounts.spotify.com/api/token'
 
 class SpotifyAuth():
 
-    def __init__(self, id, secret):
+    def __init__(self, client_id, secret):
 
-        self.id = id 
+        self.id = client_id 
         self.secret = secret
     
     def login(self):
@@ -74,9 +74,9 @@ class TrackAudioFeatures():
         self.supportedTypes = sorted(self.supportedTypes, key=lambda item: getattr(self, item), reverse=True)
 
 class Track():
-    def __init__(self, artist : Artist, id : str, total_listened : datetime.timedelta):
+    def __init__(self, artist : Artist, track_id : str, total_listened : datetime.timedelta):
         self.artist = artist
-        self.id = id
+        self.id = track_id
         self.total_listened = total_listened
 
         self.name : str = None 

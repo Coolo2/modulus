@@ -37,8 +37,8 @@ class Client():
 
         if type(message) == discord.Message:
             return message 
-        else:
-            return await ctx.original_message()
+        
+        return await ctx.original_message()
     
     def get_command(self, command_name : str) -> app_commands.Command:
 
