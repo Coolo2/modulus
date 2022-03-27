@@ -56,8 +56,7 @@ extensions = [file.replace(".py", "") for file in os.listdir('./cogs') if file.e
 
 async def setup_hook():
     for extension in extensions:
-        if extension == "errors":
-            continue
+        
         await bot.load_extension(f"cogs.{extension}")
 
     for module in client.moduleNames:

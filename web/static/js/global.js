@@ -177,10 +177,12 @@ async function doProfile() {
 }
 doProfile()
 
-elements = document.getElementsByTagName("a")
-var r = document.querySelector(':root');
+
+
 
 async function resizeHandler() {
+    elements = document.getElementsByTagName("a")
+    var r = document.querySelector(":root")
     
     if (window.innerWidth / window.innerHeight < 0.6) {
         r.style.setProperty('--font-size', '20px');
@@ -204,6 +206,16 @@ async function resizeHandler() {
                 element.style.display = "block"
             }
         }
+    }
+
+    if (window.innerWidth < 750) { 
+        document.getElementById("name").style.display = "none"
+        document.getElementById("navBar-menu-button").style.left = "calc(15%)"
+        document.getElementById("navBar-menu").style.left = "calc(15%)"
+    } else {
+        document.getElementById("name").style.display = "block"
+        document.getElementById("navBar-menu-button").style.left = "calc(15% + 250px)"
+        document.getElementById("navBar-menu").style.left = "calc(15% + 250px)"
     }
 }
 resizeHandler()
@@ -251,3 +263,17 @@ function titleCase(str) {
     }
     return str.join(' ');
 }
+
+function secondsToDhms(seconds) {
+    seconds = Number(seconds);
+    var d = Math.floor(seconds / (3600*24));
+    var h = Math.floor(seconds % (3600*24) / 3600);
+    var m = Math.floor(seconds % 3600 / 60);
+    var s = Math.floor(seconds % 60);
+    
+    var dDisplay = d > 0 ? d + (d == 1 ? " day, " : " days, ") : "";
+    var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+    var mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
+    //var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+    return dDisplay + hDisplay + mDisplay ;
+    }

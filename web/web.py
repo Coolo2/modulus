@@ -119,6 +119,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
             if "user" in users[reuse_token]:
 
                 user_cached = users[reuse_token]["user"]
+                print(user_cached)
                 user = client.bot.get_user(int(user_cached["id"]))
 
                 if user:
@@ -174,11 +175,11 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
     @app.route("/api/commands", methods=["GET"])
     async def api_commands():
 
-        modules = data.commands 
+        modules = data.modules 
 
         for module_name in modules:
 
-            for i, command_name in enumerate(modules[module_name]):
+            for i, command_name in enumerate(modules[module_name]["commands"]):
                 command = client.get_command(command_name)
 
                 if not command:
@@ -195,7 +196,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
                     } for parameter in command._params.values()
                 ]
 
-                modules[module_name][i] = {
+                modules[module_name]["commands"][i] = {
                     "name":command_name, 
                     "description":command.description,
                     "options":options
@@ -250,7 +251,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         if "prefix" in data:
 
             if not member.guild_permissions.manage_guild:
-                return quart.jsonify({"error":True, "message":"Missing permissions."})
+                return quart.jsonify({"error":True, "guild":await dashboard_home(guild, member), "message":"Missing permissions.", "data":await get_settings(guild)})
 
             if len(data["prefix"]) > 10:
                 return quart.jsonify({"error":True, "message":"Prefix too long."})
@@ -290,7 +291,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         member = await get_member(guild, quart.request)
 
         if not member.guild_permissions.manage_guild:
-            return quart.jsonify({"error":True, "message":"Missing permissions."})
+            return quart.jsonify({"error":True, "message":"Missing permissions.", "guild":await dashboard_home(guild, member), "data":await get_logs(guild)})
 
         await client.data.clear_logs(guild)
 
@@ -302,13 +303,15 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         return {
             "modules": await client.data.get_modules(guild),
-            "permissions":{"manage_guild":member.guild_permissions.manage_guild}
+            "permissions":{"manage_guild":member.guild_permissions.manage_guild, "view_audit_logs":member.guild_permissions.view_audit_log}
         }
     
-    async def get_member(guild, request) -> discord.Member:
+    async def get_member(guild : discord.Guild, request) -> discord.Member:
         reuse_token = request.cookies.get("reuse_token")
 
-        member : discord.Member = await guild.fetch_member(int(users[reuse_token]["user"]["id"]))
+        member : discord.Member = guild.get_member(int(users[reuse_token]["user"]["id"]))
+        if not member:
+            member : discord.Member = await guild.fetch_member(int(users[reuse_token]["user"]["id"]))
 
         return member
 
@@ -320,6 +323,19 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         member = await get_member(guild, quart.request)
 
         return quart.jsonify(await dashboard_home(guild, member))
+    
+    async def get_home(guild : discord.Guild):
+
+        return {
+            "modules": await client.data.get_modules(guild)
+        }
+
+    @app.route("/api/dashboard/<path:guild_id>/home", methods=["GET"])
+    async def dashboard_get_home(guild_id : int):
+        
+        guild = bot.get_guild(int(guild_id))
+
+        return quart.jsonify(await get_home(guild))
     
     async def get_tracking(guild : discord.Guild):
 
@@ -358,7 +374,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         if "enabled" in data:
 
             if not member.guild_permissions.manage_guild:
-                return quart.jsonify({"error":True, "message":"Missing permissions."})
+                return quart.jsonify({"error":True, "message":"Missing permissions.", "guild":await dashboard_home(guild, member), "data":await get_tracking(guild)})
 
             if data["enabled"] == True:
                 await client.data.enable_module(guild, "tracking")
@@ -374,9 +390,9 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
         if "disabledStatistics" in data:
 
             if not member.guild_permissions.manage_guild:
-                return quart.jsonify({"error":True, "message":"Missing permissions."})
+                return quart.jsonify({"error":True, "message":"Missing permissions.", "guild":await dashboard_home(guild, member), "data":await get_tracking(guild)})
             
-            allowedStatistics = ["voice"]
+            allowedStatistics = ["voice", "activity"]
             newStatisticsDisabled = []
 
             for stat in data["disabledStatistics"]:

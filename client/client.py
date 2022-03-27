@@ -27,8 +27,10 @@ class Client():
     
     async def send(self, ctx : discord.Interaction | commands.Context, content = None, embed = None, view=discord.utils.MISSING, ephemeral=False):
 
-
+        
         if isinstance(ctx, discord.Interaction):
+            if ctx.response.is_done():
+                return await ctx.message.reply(content=content, embed=embed, view=view, ephemeral=ephemeral)
             return await ctx.response.send_message(content=content, embed=embed, view=view, ephemeral=ephemeral)
             
         return await ctx.reply(content=content, embed=embed, view=view, mention_author=False)

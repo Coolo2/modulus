@@ -48,10 +48,5 @@ class ErrorHandling(commands.Cog):
         
         self.client.bot.tree.error(on_error)
 
-        
-        
-        
-
-
 async def setup(bot : commands.Bot):
     await bot.add_cog(ErrorHandling(bot.client), guild=s.slash_guild)

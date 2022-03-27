@@ -58,10 +58,10 @@ function getText(text) {
 }
 
 async function loadCommands() {
-    commands = await request("GET", `${address}/api/commands`)
+    modules = await request("GET", `${address}/api/commands`)
     all = document.getElementById("all")
 
-    for (m_name in commands) {
+    for (m_name in modules) {
         // Create module page 
 
         module_page = document.createElement("div")
@@ -84,7 +84,7 @@ async function loadCommands() {
 
         all.appendChild(all_page_title)
 
-        for (command of commands[m_name]) {
+        for (command of modules[m_name].commands) {
 
             options = ""
             for (option of command.options) {

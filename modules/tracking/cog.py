@@ -59,7 +59,7 @@ class SummaryCog(app_commands.Group, commands.Cog):
         for i, artist in enumerate(user.artists[:10]):
             artists += f"{i+1}. {artist.name} - **{classes.generate_time(artist.total_listened)}**\n"
         
-        embed.add_field(name="Artists", value=artists if artists != "" else "This user has never shown spotify on their status in this timeframe", inline=False)
+        embed.add_field(name="Artists", value=artists[:1024] if artists != "" else "This user has never shown spotify on their status in this timeframe", inline=False)
         if artists != "":
             embed.add_field(name="Tracks", value="<a:typing:957263956605542450>", inline=False)
 
@@ -77,10 +77,11 @@ class SummaryCog(app_commands.Group, commands.Cog):
         averageDuration = 0
         averages = {"energy":0, "danceability":0, "valence":0, "instrumentalness":0, "liveness":0, "acousticness":0, "speechiness":0}
         for track in trackFeatures:
-            averageTempo += track.features.tempo
+            if track.features:
+                averageTempo += track.features.tempo
 
-            for average in averages:
-                averages[average] += getattr(track.features, average)
+                for average in averages:
+                    averages[average] += getattr(track.features, average)
         
         for track in trackFeatures:
             averagePopularity += track.popularity
@@ -121,13 +122,13 @@ class SummaryCog(app_commands.Group, commands.Cog):
             artist : sp.Artist = artist
             artists += f"{i+1}. [{artist.name}]({artist.url}) - **{classes.generate_time(artist.total_listened)}**\n"
 
-        for i, track in enumerate(trackFeatures[:10]):
+        for i, track in enumerate(trackFeatures[:8]):
             tracks_msg += f"{i+1}. [{', '.join([a.name for a in track.artists])} - {track.name}]({track.url}) - **{classes.generate_time(track.total_listened)}**\n"
         
         embed.remove_field(0)
         embed.remove_field(0)
-        embed.add_field(name="Artists", value=artists if artists != "" else "This user has never shown spotify on their status in this timeframe", inline=False)
-        embed.add_field(name="Tracks", value=tracks_msg if artists != "" else "This user has never shown spotify on their status in this timeframe")
+        embed.add_field(name="Artists", value=artists[:1024] if artists != "" else "This user has never shown spotify on their status in this timeframe", inline=False)
+        embed.add_field(name="Tracks", value=tracks_msg[:1024] if tracks_msg != "" else "This user has never shown spotify on their status in this timeframe")
 
         embed.set_footer(text="*Song popularity is a number based on plays and song release date. More recent and more played songs have a higher popularity number.")
 
@@ -175,14 +176,17 @@ class SummaryCog(app_commands.Group, commands.Cog):
         for i, voice_channel in enumerate(user.voice_channels[:5]):
             voice += f"{i+1}. <#{voice_channel.channel_id}> - **{classes.generate_time(voice_channel.time.total_time)}** [{voice_channel.time.last_seen.timestamp}]"
 
+        st = await self.client.data.get_guild_setting(ctx.guild, "tracking_disabledStatistics")
+
         embed.add_field(name="Statuses", value=f"""
 Online: **{classes.generate_time(user.types.online.total_time)}** [{user.types.online.last_seen.timestamp}]
 Do Not Disturb: **{classes.generate_time(user.types.dnd.total_time)}** [{user.types.dnd.last_seen.timestamp}]
 Idle: **{classes.generate_time(user.types.idle.total_time)}** [{user.types.idle.last_seen.timestamp}]
 Offline: **{classes.generate_time(user.types.offline.total_time)}** [{user.types.offline.last_seen.timestamp}]
         """)
-
-        embed.add_field(name="Activities", value=activities if activities != "" else "_ _ ", inline=False)
+        
+        if not st or "activity" not in st:
+            embed.add_field(name="Activities", value=activities if activities != "" else "_ _ ", inline=False)
 
         embed.add_field(name="Platforms", value=f"""
 Desktop: **{classes.generate_time(user.platforms.desktop.total_time)}** [{user.platforms.desktop.last_seen.timestamp}]
@@ -190,7 +194,7 @@ Mobile: **{classes.generate_time(user.platforms.mobile.total_time)}** [{user.pla
 Web: **{classes.generate_time(user.platforms.web.total_time)}** [{user.platforms.web.last_seen.timestamp}]
         """, inline=False)
 
-        st = await self.client.data.get_guild_setting(ctx.guild, "tracking_disabledStatistics")
+        
         if not st or "voice" not in st:
             embed.add_field(name="Voice", value=voice if voice != "" else "_ _ ", inline=False)
 
@@ -272,8 +276,10 @@ Total tracked time: **{classes.generate_time(user.total_tracked())}**
 
             statuses_msg += f"{i+1}. <@{user.user.user_id}> - **{classes.generate_time(user.types.dnd.total_time + user.types.online.total_time)}** [{last_online}]\n"
 
+        st = await self.client.data.get_guild_setting(ctx.guild, "tracking_disabledStatistics")
 
-        embed.add_field(name="Activities", value=activities_msg, inline=False)
+        if not st or "activity" not in st:
+            embed.add_field(name="Activities", value=activities_msg, inline=False)
         embed.add_field(name="Online Time", value=statuses_msg if statuses_msg != "" else "_ _ ", inline=False)
 
         embed.add_field(name="More", value=f"""

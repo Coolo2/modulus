@@ -9,6 +9,7 @@
     --background-highlight:#101216;
 
     --primary:#5865F2;
+    --primary-darker:rgb(58, 66, 156, 0.7);
     --success:#43B581;
     --danger:#F04747;
     --font-size:15px
@@ -123,7 +124,7 @@ address {
     font-family:Nunito
 }
 .navbar-item {
-    font-size:20px;
+    font-size:calc(var(--font-size) + 5px);
     color:var(--general-color);
     font-weight:400;
     text-shadow:0 0 10px black;
@@ -157,6 +158,7 @@ address {
     cursor:pointer;
     text-decoration: none;
     color:white;
+    font-size:var(--font-size)
 }
 .navBar-menu-item:hover {
     background-color:rgb(255, 255, 255, 0.2)
@@ -185,6 +187,23 @@ address {
     cursor:pointer;
     transition:border-radius .05s, filter .05s, opacity 1s, transform 1s, box-shadow .05s;
     text-decoration:none;
+}
+
+.button-disabled {
+    background-color:var(--primary);
+    width:175px;
+    height:50px;
+    color:white;
+    border:0;
+    border-radius:10px;
+    font-size:15px;
+    box-shadow:0 0 10px black;
+    text-shadow:none;
+    cursor:pointer;
+    transition:border-radius .05s, filter .05s, opacity 1s, transform 1s, box-shadow .05s;
+    text-decoration:none;
+    filter:brightness(40%);
+    cursor:not-allowed;
 }
 
 .button-danger {
@@ -247,6 +266,16 @@ address {
     padding:15px;
     color:white;
     font-size:calc(var(--font-size) + 5px)
+}
+.input-disabled {
+    background-color:var(--background-highlight);
+    border:1px solid black;
+    border-radius:10px;
+    padding:15px;
+    color:white;
+    font-size:calc(var(--font-size) + 5px);
+    filter:brightness(50%);
+    cursor:not-allowed
 }
 
 .progress {

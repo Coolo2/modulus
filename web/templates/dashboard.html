@@ -10,7 +10,9 @@
     <address>{{address}}</address>
     <body>
         
-        
+        <div class="modules-toggle" id="modules-toggle" style="display:none">
+            <div class="all-center"><i class="fas fa-chevron-right" style="transition: transform .3s" id="modules-toggle-chevron"></i></div>
+        </div>
         <div class="modules" id="modules">
             <div style="display:none" id="modules-hider" class="noselect">
                 <div class="modules-section">
@@ -39,6 +41,10 @@
 
             <div class="body-item" id="dashboard">
                 <div class="title" style="margin:15px">Dashboard Home</div>
+                <div class="subtitle" style="margin:15px 0 0 15px">Modules</div>
+                <div class="description" style="font-size:calc(var(--font-size) + 3px);margin:0 0 10px 15px">Sections of the bot that are toggleable and based</div>
+                <input class="input" placeholder="Search..." id="dashboard-home-modules-search" style="margin:0 0 15px 15px;width:500px;background-color:var(--background-color)">
+                <div class="body-item-tile-container" id="dashboard-home-modules"></div>
             </div>
             <div class="body-item" id="dashboard-settings">
                 <div class="title" style="margin:15px">Server Settings</div>
@@ -53,8 +59,9 @@
                 <div class="title" style="margin:15px">Modulus Logs 
                     <span>
                         <a class="button-primary" style="position:absolute;margin-left:25px" id="dashboard-logs-clear">
-                            <span class="all-center noselect" style="font-size:150%">
-                                Clear
+                            <span class="all-center noselect" style="font-size:150%;display: flex;">
+                                <i class="fas fa-trash-alt" style="margin-top:5px"></i>
+                                <span style="margin-left:10px">Clear</span>
                             </span>
                         </a>
                     </span>
@@ -86,11 +93,22 @@
                 <div class="body-item-tile-container">
                     <div class="body-item-tile" id="modules-tracking-voice">
                         <div class="title" style="font-size:calc(var(--font-size) * 1.5)">Voice Channel Statistics</div>
-                        <div class="description" style="margin-top:10px;">Displays statistics for user VC time</div>
+                        <div class="description" style="margin-top:10px;">Displays statistics for user Voice Channel time on the <span class="subtitle" style="font-size:var(--font-size)">/summary</span> embeds</div>
 
-                        <label for="modules-tracking-voice-switch" class="toggle-switchy body-item-tile-switch" data-style="rounded" style="bottom:15px;right:15px;position:absolute">
+                        <label for="modules-tracking-voice-switch" class="toggle-switchy body-item-tile-switch" data-size="xl" data-style="rounded" style="right:-5px;margin-top:25px">
                             <input checked type="checkbox" id="modules-tracking-voice-switch" >
                             <span class="toggle" id="modules-tracking-voice-switch">
+                                <span class="switch"></span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="body-item-tile" id="modules-tracking-activity">
+                        <div class="title" style="font-size:calc(var(--font-size) * 1.5)">Activity Statistics</div>
+                        <div class="description" style="margin-top:10px;">Displays statistics for user games on the <span class="subtitle" style="font-size:var(--font-size)">/summary</span> embeds</div>
+
+                        <label for="modules-tracking-activity-switch" class="toggle-switchy body-item-tile-switch" data-size="xl" data-style="rounded" style="right:-5px;margin-top:25px">
+                            <input checked type="checkbox" id="modules-tracking-activity-switch" >
+                            <span class="toggle" id="modules-tracking-activity-switch">
                                 <span class="switch"></span>
                             </span>
                         </label>
@@ -101,7 +119,7 @@
 
         </div>
 
-        <div class="title" style="position:absolute;top:140px;left:50px;">
+        <div class="title" style="position:absolute;top:140px;left:50px;" id="title">
             Dashboard - Server
         </div>
         <div class="dropdown noselect" style="position:absolute;top:138px;left:500px;box-shadow:0 0 10px black;" id="dropdown-guild">
@@ -112,14 +130,14 @@
             <div class="loader" style="margin:15px"></div>
         </div>
 
-        <div class="loader" style="position:absolute;top:148px;left:770px;box-shadow:0 0 5px rgb(0, 0, 0, 0.5);" id="dropdown-guild-loader"></div>
+        <div class="loader" style="position:absolute;top:148px;left:870px;box-shadow:0 0 5px rgb(0, 0, 0, 0.5);" id="dropdown-guild-loader"></div>
 
         <div class="topper" style="height:200px;"><div class="topper-fade"></div></div>
         
         <div class="navBar">
             <a href="/">
                 <img style="left:calc(15% - 70px)" class="vertical-center navBar-image" src="/static/images/icon.jpeg" draggable="false" onmousedown="" >
-                <span style="left:15%" class="vertical-center navBar-title noselect">Modulus</span>
+                <span style="left:15%" class="vertical-center navBar-title noselect" id="name">Modulus</span>
             </a>
 
             <div class="navBar-item vertical-center noselect" style="left:calc(15% + 250px)" id="navBar-menu-button"><span style="padding:10px">Menu</span><span><i class="fas fa-bars"></i></span></div>

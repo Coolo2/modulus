@@ -50,11 +50,11 @@ CORE STYLES ABOVE - NO TOUCHY
 ////////////////////////// */
 
 /* Size: Extra Large */
-.toggle-switchy[data-size='xl'] > input + .toggle							{width:85px; height:40px;}
-.toggle-switchy[data-size='xl'] > input + .toggle > .switch					{width:40px;}
+.toggle-switchy[data-size='xl'] > input + .toggle							{width:120px; height:50px;}
+.toggle-switchy[data-size='xl'] > input + .toggle > .switch					{width:50px;}
 .toggle-switchy[data-size='xl'] > input + .toggle:before,
 .toggle-switchy[data-size='xl'] > input + .toggle:after						{font-size:1.2rem;}
-.toggle-switchy[data-size='xl'] > input:not(:checked) + .toggle > .switch	{right:calc(100% - 40px);}
+.toggle-switchy[data-size='xl'] > input:not(:checked) + .toggle > .switch	{right:calc(100% - 50px);}
 
 /* Size: Large */
 .toggle-switchy[data-size='lg'] > input + .toggle							{width:75px; height:35px;}
