@@ -77,7 +77,7 @@ class SummaryCog(app_commands.Group, commands.Cog):
         averageDuration = 0
         averages = {"energy":0, "danceability":0, "valence":0, "instrumentalness":0, "liveness":0, "acousticness":0, "speechiness":0}
         for track in trackFeatures:
-            if track.features:
+            if track.features and track.features.tempo:
                 averageTempo += track.features.tempo
 
                 for average in averages:
@@ -133,6 +133,8 @@ class SummaryCog(app_commands.Group, commands.Cog):
         embed.set_footer(text="*Song popularity is a number based on plays and song release date. More recent and more played songs have a higher popularity number.")
 
         await message.edit(embed=embed)
+
+        print(dict(message))
 
 
     

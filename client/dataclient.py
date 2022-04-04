@@ -6,6 +6,7 @@ import time
 import datetime
 
 import modules.tracking.data
+import modules.webhooks.data
 
 import json
 
@@ -37,6 +38,7 @@ class DataClient():
         self.client = client
 
         self.module_tracking = modules.tracking.data.DataModule(self.client)
+        self.module_webhooks = modules.webhooks.data.DataModule(self.client)
     
     async def get_prefix(self, guild : discord.Guild):
 

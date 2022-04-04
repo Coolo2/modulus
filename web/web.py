@@ -7,6 +7,8 @@ import urllib.parse
 import random
 import secrets
 import logging
+import typing
+import json
 
 from client import client, data
 from web.oauth import Oauth
@@ -120,7 +122,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
                 user_cached = users[reuse_token]["user"]
                 print(user_cached)
-                user = client.bot.get_user(int(user_cached["id"]))
+                user = client.bot.get_user(int(user_cached["id"])) if "id" in user_cached else None
 
                 if user:
                     for key, value in user._to_minimal_user_json().items():
@@ -303,7 +305,8 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         return {
             "modules": await client.data.get_modules(guild),
-            "permissions":{"manage_guild":member.guild_permissions.manage_guild, "view_audit_logs":member.guild_permissions.view_audit_log}
+            "permissions":{"manage_guild":member.guild_permissions.manage_guild, "view_audit_logs":member.guild_permissions.view_audit_log},
+            "channels":[{"name":channel.name, "id":str(channel.id), "type":channel.type[0]} for channel in guild.channels]
         }
     
     async def get_member(guild : discord.Guild, request) -> discord.Member:
@@ -361,7 +364,7 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
 
         return quart.jsonify(tracking)
     
-    @app.route("/api/dashboard/<path:guild_id>/tracking", methods=["POST"])
+    @app.route("/api/dashboard/<path:guild_id>/tracking", methods=["UPDATE"])
     async def save_tracking_settings(guild_id : int):
 
         data = await quart.request.json
@@ -404,6 +407,125 @@ async def generate_app(bot : commands.Bot, client : client.Client) -> quart.Quar
             
             returnValue = quart.jsonify({"error":False, "message":"Successfully set statistics toggles", "data":await get_tracking(guild)})
 
+        
+        return returnValue
+    
+    async def get_webhooks(guild : discord.Guild):
+
+        return {
+            "modules":await client.data.get_modules(guild), 
+        }
+    
+    async def get_webhooks_in(channel : discord.TextChannel):
+
+        msgs = await client.data.module_webhooks.get(channel)
+
+        return {
+            "messages":[{"webhook_id":str(m[2]), "message_id":str(m[3]), "message":json.loads(m[4])} for m in msgs]
+        }
+    
+    @app.route("/api/dashboard/<path:guild_id>/webhooks", methods=["GET"])
+    async def dashboard_webhooks(guild_id : int):
+
+        guild = bot.get_guild(int(guild_id))
+
+        tracking = await get_webhooks(guild)
+
+        return quart.jsonify(tracking)
+    
+    @app.route("/api/dashboard/<path:guild_id>/webhooks/<path:channel_id>", methods=["GET"])
+    async def dashboard_webhooks_channel(guild_id : int, channel_id : int):
+
+        guild : discord.Guild = bot.get_guild(int(guild_id))
+        channel = guild.get_channel(int(channel_id))
+
+        tracking = await get_webhooks_in(channel)
+
+        return quart.jsonify(tracking)
+    
+    @app.route("/api/dashboard/<path:guild_id>/webhooks/<path:channel_id>/<path:webhook_id>/<path:message_id>", methods=["DELETE"])
+    async def delete_message(guild_id : int, channel_id : int, webhook_id : int, message_id : int):
+
+        data = await quart.request.json
+        guild = bot.get_guild(int(guild_id))
+        channel = guild.get_channel(int(channel_id))
+
+        member = await get_member(guild, quart.request)
+
+        if not member.guild_permissions.manage_guild:
+            return quart.jsonify({"error":True, "message":"Missing permissions.", "guild":await dashboard_home(guild, member), "data":await get_webhooks_in(channel)})
+
+        await client.data.module_webhooks.delete(channel, webhook_id, message_id)
+
+        return quart.jsonify({"error":False, "message":"Successfully deleted message", "data":await get_webhooks_in(channel)})
+    
+    @app.route("/api/dashboard/<path:guild_id>/webhooks/<path:channel_id>", methods=["POST"])
+    async def post_message(guild_id : int, channel_id : int):
+
+        data = await quart.request.json
+        guild = bot.get_guild(int(guild_id))
+        channel = guild.get_channel(int(channel_id))
+
+        member = await get_member(guild, quart.request)
+
+        if not member.guild_permissions.manage_guild:
+            return quart.jsonify({"error":True, "message":"Missing permissions.", "guild":await dashboard_home(guild, member), "data":await get_webhooks_in(channel)})
+        
+        if "message" not in data:
+            return quart.jsonify({"error":True, "message":"Message not attached (try reloading the page).", 
+                    "guild":await dashboard_home(guild, member), "data":await get_webhooks_in(channel)})
+        
+        content = data["message"]["content"] if "content" in data["message"] and data["message"]["content"].replace(" ", "") != "" else None
+        username = data["message"]["username"] if "username" in data["message"] and data["message"]["username"].replace(" ", "") != "" else None
+        avatar_url = data["message"]["avatar_url"] if "avatar_url" in data["message"] and data["message"]["avatar_url"].replace(" ", "") != "" else None
+        embeds : typing.List[discord.Embed] = []
+
+        if "embeds" in data["message"]:
+            for embed_raw in data["message"]["embeds"]:
+                embed = discord.Embed(
+                    title = embed_raw["title"] if "title" in embed_raw and embed_raw["title"].replace(" ", "") != "" else None,
+                    description = embed_raw["description"] if "description" in embed_raw and embed_raw["description"].replace(" ", "") != "" else None
+                )
+                if "footer" in embed_raw and embed_raw["footer"].replace(" ", "") != "":
+                    embed.set_footer(text=embed_raw["footer"])
+                
+                if embed.title or embed.description or embed.footer:
+                    embeds.append(embed)
+        
+        if not content and len(embeds) == 0:
+            return quart.jsonify({"error":True, "message":"Message content empty", "data":await get_webhooks_in(channel)})
+        
+        await client.data.module_webhooks.send(channel, username, avatar_url, content, embeds)
+
+        return quart.jsonify({"error":False, "message":"Successfully sent webhook to channel.", "data":await get_webhooks_in(channel)})
+        
+
+    
+    @app.route("/api/dashboard/<path:guild_id>/webhooks", methods=["UPDATE"])
+    async def save_dashboard_webhooks(guild_id : int):
+
+        data = await quart.request.json
+        guild = bot.get_guild(int(guild_id))
+
+        member = await get_member(guild, quart.request)
+
+        returnValue = None
+
+        if "enabled" in data:
+
+            if not member.guild_permissions.manage_guild:
+                return quart.jsonify({"error":True, "message":"Missing permissions.", "guild":await dashboard_home(guild, member), "data":await get_webhooks(guild)})
+
+            if data["enabled"] == True:
+                await client.data.enable_module(guild, "webhooks")
+                await client.data.add_log(guild, member, "MODULE_ENABLED", f"{member} enabled module 'webhooks'")
+
+                return quart.jsonify({"error":False, "message":"Successfully enabled module", "data":await get_webhooks(guild)})
+
+            await client.data.disable_module(guild, "webhooks")
+            await client.data.add_log(guild, member, "MODULE_DISABLED", f"{member} disabled module 'webhooks'")
+
+            returnValue = quart.jsonify({"error":False, "message":"Successfully disabled module", "data":await get_webhooks(guild)})
         
         return returnValue
     

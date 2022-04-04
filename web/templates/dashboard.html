@@ -28,8 +28,11 @@
                     <div class="horizontal-center">Modules </div>
                 </div>
                 <div class="modules-item noseleect" onclick="openTracking(this)" id="modules-tracking" style="color:var(--general-color)">
-                    <div class="modules-item-new">new!</div>
                     <i class="fas fa-flag-checkered"></i><span class="modules-item-text">Tracking</span>
+                </div>
+                <div class="modules-item noseleect" onclick="openWebhooks(this)" id="modules-webhooks" style="color:var(--general-color)">
+                    <div class="modules-item-new">new!</div>
+                    <i class="fas fa-comment-alt"></i><span class="modules-item-text">Webhooks</span>
                 </div>
             </div>
         </div>
@@ -113,10 +116,38 @@
                             </span>
                         </label>
                     </div>
+                    
                 </div>
+            </div>
+            <div class="body-item" id="dashboard-modules-webhooks">
+                <div class="title" style="margin:15px">
+                
+                    <span id="modules-webhooks-title">Server Webhooks</span>
+                    <a class="button-primary noselect" style="position:absolute;margin-left:25px;" id="modules-webhooks-enable">
+                        <span class="all-center noselect" style="font-size:150%" id="modules-webhooks-enable-label">
+                        </span>
+                    </a>
+                    
+                </div>
+                <div class="body-item-list-body" id="webhooks-channel">
+                    <div class="body-item-list-body-chat" id="webhooks-channel-chat">
+                        <div style="transform:rotate(180deg) scaleX(-1);bottom:15px;position:absolute;left:15px">
+                            <div class="title">Modulus Webhooks</div>
+                            <div class="description">Click on a channel to the left to begin!</div>
+                        </div>
+                        
+                    </div>
+
+                    <a class="button-primary body-item-list-body-send noselect" id="webhooks-channel-new">
+                        <span class="all-center noselect" style="font-size:150%;display: flex;" id="webhooks-channel-new">
+                            <i class="fas fa-plus" style="margin-top:7px"></i>
+                            <span style="margin-left:10px">New message</span>
+                        </span>
+                    </a>
+                </div>
+                <div class="body-item-list" id="webhooks-channels"></div>
                 
             </div>
-
         </div>
 
         <div class="title" style="position:absolute;top:140px;left:50px;" id="title">
@@ -158,6 +189,17 @@
                 <a class="navBar-menu-item" href="/dashboard"><span class="all-center">Servers</span></a>
                 <a class="navBar-menu-item" style="top:50px"><span class="all-center">Settings</span></a>
                 <a class="navBar-menu-item" style="top:150px;color:red" href="/logout"><span class="all-center">Log Out</span></a>
+            </div>
+        </div>
+
+        <!-- [1] -->
+        <div class="modal-container" id="modal">
+            <div class="modal-avatar all-center" id="modal-avatar">
+                <i class="fas fa-times" style="position:absolute;right:15px;top:15px;font-size:30px;cursor:pointer" id="modal-avatar-close"></i>
+                <div class="title">Message Avatar</div>
+                <div class="description">Change the avatar of the message with an image <b>URL</b></div>
+                <input class="input" placeholder="Image URL" style="margin-top:30px;width:75%" id="modal-avatar-input" maxlength="100">
+                <img id="modal-avatar-preview" style="width:100px;height:100px;position:absolute;margin-left:30px">
             </div>
         </div>
     </body>

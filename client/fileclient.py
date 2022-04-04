@@ -16,12 +16,15 @@ class FileClient():
     async def initialise_databases(self):
         self.db = Database(self, "data.db")
         self.tracking = Database(self, "tracking.db")
+        self.webhook = Database(self, "webhook.db")
 
         await self.db.initialise()
         await self.tracking.initialise()
+        await self.webhook.initialise()
 
         self.databases.append(self.db)
         self.databases.append(self.tracking)
+        self.databases.append(self.webhook)
 
     async def sync_databases(self):
         

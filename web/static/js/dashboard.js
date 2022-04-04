@@ -438,6 +438,9 @@ async function loadHome(data, query = null) {
             if (mod == "tracking") {
                 await openTracking(document.getElementById(`modules-${mod}`))
             }
+            if (mod == "webhooks") {
+                await openWebhooks(document.getElementById(`modules-${mod}`))
+            }
         }
 
     }
@@ -625,18 +628,16 @@ async function loadTracking(tracking) {
 
     document.getElementById("modules-tracking-enable").onclick = async function () {
         if (currentGuildData.modules.includes("tracking")) {
-            tracking = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/tracking`, {enabled:false})
+            tracking = await saveNoTime("UPDATE", `${address}/api/dashboard/${currentGuild.id}/tracking`, {enabled:false})
         } else {
-            tracking = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/tracking`, {enabled:true})
+            tracking = await saveNoTime("UPDATE", `${address}/api/dashboard/${currentGuild.id}/tracking`, {enabled:true})
         }
     
         await loadTracking(tracking.data)
-        
     }
 
     if (tracking.modules.includes("tracking")) {
         
-
         document.getElementById("modules-tracking-title").classList.remove("disabled")
 
         document.getElementById("modules-tracking-enable").className = "button-danger noselect"
@@ -720,9 +721,433 @@ async function tracking_onclick_disable(e) {
     if (!voiceChecked) {disabledModules.push("voice")}
     if (!activityChecked) {disabledModules.push("activity")}
 
-    data = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/tracking`, {disabledStatistics:disabledModules})
+    data = await saveNoTime("UPDATE", `${address}/api/dashboard/${currentGuild.id}/tracking`, {disabledStatistics:disabledModules})
     await loadTracking(data.data)
 }
 
 document.getElementById("modules-tracking-voice-switch").onclick = tracking_onclick_disable
 document.getElementById("modules-tracking-activity-switch").onclick = tracking_onclick_disable
+
+webhooks_preview = {embeds:[]}
+webhooks_channel_id = null
+
+function getEmbed() {
+    embed = document.createElement("div")
+    embed.id = `preview-embed-${webhooks_preview.length}`
+    embed.classList = "preview-embed"
+    title = document.createElement("input")
+    title.classList = "preview-embed-title preview-textarea-edit"
+    title.placeholder = "Embed title (optional)"
+    title.id = `${embed.id}-title`
+    desc = document.createElement("textarea")
+    desc.classList = "preview-embed-description preview-textarea-edit"
+    desc.placeholder = "Embed description (optional)"
+    desc.id = `${embed.id}-description`
+    foot = document.createElement("input")
+    foot.classList = "preview-embed-footer preview-textarea-edit"
+    foot.placeholder = "Embed footer (optional)"
+    foot.id = `${embed.id}-footer`
+    embedClose = document.createElement("i")
+    embedClose.classList = "fas fa-times preview-embed-delete"
+    embedClose.id = `${embed.id}-close`
+    color = document.createElement("div")
+    color.classList = "preview-embed-color"
+
+    embed.appendChild(color)
+    embed.appendChild(title)
+    embed.appendChild(desc)
+    embed.appendChild(foot)
+    embed.appendChild(embedClose)
+
+    webhooks_preview.embeds.push(embed.id)
+
+    embedClose.onclick = function(e) {
+        document.getElementById(e.target.id.replace("-close", "")).remove()
+    }
+
+    return embed
+}
+
+addOnclick = async function(e) {
+    webhooks_preview = {embeds:[]}
+
+    document.getElementById("webhooks-channel-new").classList = "button-disabled noselect body-item-list-body-send"
+    document.getElementById("webhooks-channel-new").onclick = null
+
+    userEditIcon = document.createElement("span")
+    userEditIcon.innerHTML = `<i class="fas fa-pen"></i>`
+    userEditIcon.classList = "preview-icon-editable"
+
+    channel = document.getElementById("webhooks-channel-chat")
+
+    preview = document.createElement("div")
+    preview.classList = "preview preview-editable"
+    preview.id = "preview"
+
+    avatar = document.createElement("div")
+    avatar.innerHTML = `<img class="preview-avatar" src="https://cdn.discordapp.com/avatars/${profileData.id}/${profileData.avatar}.webp?size=128" id="preview-avatar-image"><div class="overlay"><i class="fas fa-pen"></i></div>`
+    avatar.classList = "preview-avatar"
+    avatar.id = "preview-avatar"
+    avatar.style.cursor = "pointer"
+
+    avatar.onclick = function() {
+        modal = document.getElementById("modal")
+        modal.style.height = "100%"
+        modal.style.width = "100%"
+        modal.style.opacity = 1
+
+        modalAvatar = document.getElementById("modal-avatar")
+
+        document.getElementById("modal-avatar-input").oninput = async function(e) {
+            document.getElementById("modal-avatar-preview").src = document.getElementById("modal-avatar-input").value 
+
+            if (document.getElementById("modal-avatar-input").value.split(" ").join("") == "") {
+                document.getElementById("preview-avatar-image").src = `https://cdn.discordapp.com/avatars/${profileData.id}/${profileData.avatar}.webp?size=128`
+            } else {
+                document.getElementById("preview-avatar-image").src = document.getElementById("modal-avatar-input").value 
+            }
+            
+        }
+
+        document.getElementById("modal-avatar-close").onclick = async function(e) {
+            modal.style.opacity = 0
+
+            setTimeout(() => {
+                modalAvatar.height = 0;
+                modal.style.height = "0"
+                modal.style.width = "0"
+            }, 200);
+        }
+    }
+
+    user = document.createElement("span")
+    user.classList = "preview-user"
+    user.id = "preview-user"
+    user.contentEditable = true
+    user.innerText = profileData.username
+    user.onkeypress = function(e) {return (this.innerText.length <= 26)}
+    message = document.createElement("textarea")
+    message.classList = "preview-message preview-textarea-edit"
+    message.placeholder = "Message Content (optional)"
+    message.style.width = "calc(100% - 300px)"
+    message.id = "preview-message"
+
+    
+
+    preview.appendChild(avatar)
+    
+    preview.appendChild(user)
+    preview.appendChild(userEditIcon.cloneNode(true))
+
+    preview.appendChild(document.createElement("br"))
+    
+    preview.appendChild(message)
+
+    newEmbedButton = document.createElement("a")
+    newEmbedButton.classList = "button-primary preview-button"
+    newEmbedButton.style.marginTop = "-15px"
+    buttonText = document.createElement("span")
+    buttonText.classList = "vertical-center noselect"
+    buttonText.innerText = "Add Embed"
+    buttonText.style.fontSize = "15px"
+    buttonText.style.marginLeft = "15px"
+    newEmbedButton.appendChild(buttonText)
+    newEmbedButton.id = "preview-button"
+    buttonText.id = "preview-button"
+    newEmbedButton.onclick = function(e) {
+        document.getElementById("preview").appendChild(getEmbed())
+    }
+
+    preview.appendChild(newEmbedButton)
+
+    publishButton = document.createElement("a")
+    publishButton.classList = "button-primary button-success preview-button"
+    buttonIcon = document.createElement("span")
+    buttonIcon.innerHTML = `<i class="fas fa-upload"></i>`
+    buttonIcon.classList = "vertical-center noselect"
+    buttonIcon.style.fontSize = "15px"
+    buttonIcon.style.marginLeft = "10px"
+    publishButton.appendChild(buttonIcon.cloneNode(true))
+    buttonText = document.createElement("span")
+    buttonText.classList = "vertical-center noselect"
+    buttonText.innerText = "Publish"
+    buttonText.style.fontSize = "15px"
+    buttonText.style.marginLeft = "35px"
+    publishButton.appendChild(buttonText.cloneNode(true))
+    publishButton.id = "preview-button"
+    buttonText.id = "preview-button"
+
+    publishButton.onclick = async function(e) {
+        preview = document.getElementById("preview")
+        content = document.getElementById("preview-message").value 
+        avatar_url = document.getElementById("preview-avatar-image").src 
+        username = document.getElementById("preview-user").innerText
+        embeds = []
+        for (embed_id of webhooks_preview.embeds) {
+            if (document.getElementById(embed_id)) {
+                embeds.push({
+                    title:document.getElementById(`${embed_id}-title`).value, 
+                    description:document.getElementById(`${embed_id}-description`).value, 
+                    footer:document.getElementById(`${embed_id}-footer`).value
+                })
+            }
+        }
+
+        message_raw = {content:content, avatar_url:avatar_url, username:username, embeds:embeds}
+
+        data = await saveNoTime("POST", `${address}/api/dashboard/${currentGuild.id}/webhooks/${webhooks_channel_id}`, data={message:message_raw})
+
+        if (!data.error) {
+            document.getElementById("preview").remove()
+            document.getElementById("webhooks-channel-new").onclick = addOnclick
+            document.getElementById("webhooks-channel-new").classList = "button-primary noselect body-item-list-body-send"
+            
+            document.getElementById("webhooks-channel-chat").innerHTML = ""
+            for (msg of data.data.messages.reverse()) {
+                displayMessage(msg)
+            }
+        }
+        
+    }
+
+    preview.appendChild(publishButton)
+
+    deleteButton = document.createElement("a")
+    deleteButton.classList = "button-primary button-danger preview-button"
+    deleteButton.style.width = "40px"
+    deleteButton.style.position = "absolute"
+    deleteButton.style.left = "30px"
+    deleteButton.style.bottom = "15px"
+    buttonIcon = document.createElement("span")
+    buttonIcon.innerHTML = `<i class="fas fa-trash-alt"></i>`
+    buttonIcon.classList = "vertical-center noselect"
+    buttonIcon.style.fontSize = "20px"
+    buttonIcon.style.marginLeft = "10px"
+    deleteButton.appendChild(buttonIcon.cloneNode(true))
+    deleteButton.id = "preview-1-button"
+    buttonText.id = "preview-1-button"
+    deleteButton.onclick = function(e) {
+        document.getElementById("preview").remove()
+        document.getElementById("webhooks-channel-new").onclick = addOnclick
+        document.getElementById("webhooks-channel-new").classList = "button-primary noselect body-item-list-body-send"
+    }
+
+    preview.appendChild(deleteButton)
+
+    if (!channel.firstChild) {
+        channel.appendChild(preview)
+    } else {
+        //channel.appendChild(preview)
+        channel.insertBefore(preview, channel.firstChild);
+    }
+    
+}
+
+function displayMessage(messageData) {
+    chat = document.getElementById("webhooks-channel-chat")
+
+    message = document.createElement("div")
+    message.classList = "preview"
+    message.id = messageData.message_id
+
+    deleteButton = document.createElement("div")
+    deleteButton.classList = "button-danger noselect"
+    buttonIcon = document.createElement("span")
+    buttonIcon.innerHTML = `<i id="${message.id}-${messageData.webhook_id}-delete" class="fas fa-trash-alt"></i>`
+    buttonIcon.classList = "vertical-center noselect"
+    buttonIcon.style.fontSize = "20px"
+    buttonIcon.style.marginLeft = "10px"
+    buttonIcon.id = `${message.id}-${messageData.webhook_id}-delete`
+    deleteButton.appendChild(buttonIcon)
+    deleteButton.style.right = "15px"
+    deleteButton.style.position = "absolute"
+    deleteButton.style.width = "40px"
+    deleteButton.id = `${message.id}-${messageData.webhook_id}-delete`
+    
+
+    deleteButton.onclick = async function(e) {
+        message_id = e.target.id.split("-")[0]
+        webhook_id = e.target.id.split("-")[1]
+
+        data = await saveNoTime("DELETE", `${address}/api/dashboard/${currentGuild.id}/webhooks/${webhooks_channel_id}/${webhook_id}/${message_id}`)
+
+        if (!data.error) {
+            
+            document.getElementById("webhooks-channel-new").onclick = addOnclick
+            document.getElementById("webhooks-channel-new").classList = "button-primary noselect body-item-list-body-send"
+            
+            document.getElementById("webhooks-channel-chat").innerHTML = ""
+            for (msg of data.data.messages.reverse()) {
+                displayMessage(msg)
+            }
+        }
+    }
+
+    message.appendChild(deleteButton)
+
+
+    avatar = document.createElement("img")
+    avatar.classList = "preview-avatar"
+    avatar.src = messageData.message.avatar_url
+
+    message.appendChild(avatar)
+
+    user = document.createElement("span")
+    user.classList = "preview-user"
+    user.innerText = messageData.message.username
+
+    message.appendChild(user)
+
+    time = document.createElement("span")
+    time.classList = "preview-timestamp"
+    time.innerText = timeConverter(messageData.message.sent_at)
+
+    message.appendChild(time)
+
+    if (messageData.message.content) {
+        content = document.createElement("div")
+        content.classList = "preview-message"
+        content.style.width = "calc(100% - 300px)"
+        content.innerText = messageData.message.content
+
+        message.appendChild(content)
+    }
+    
+
+    for (e of messageData.message.embeds) {
+        embed = document.createElement("div")
+        embed.classList = "preview-embed"
+
+        color = document.createElement("div")
+        color.classList = "preview-embed-color"
+        embed.appendChild(color)
+
+        if (e.title) {
+            title = document.createElement("div")
+            title.classList = "preview-embed-title"
+            title.innerText = e.title 
+            embed.appendChild(title)
+        }
+        if (e.description) {
+            description = document.createElement("div")
+            description.classList = "preview-embed-description"
+            description.innerText = e.description 
+            embed.appendChild(description)
+        }
+        if (e.footer) {
+            footer = document.createElement("div")
+            footer.classList = "preview-embed-footer"
+            footer.innerText = e.footer.text 
+            embed.appendChild(footer)
+        }
+        message.appendChild(embed)
+    }
+
+    
+    
+
+    chat.appendChild(message)
+    
+
+}
+
+async function loadWebhooks(webhooks) {
+    if (!webhooks) {
+        webhooks = await request("GET", `${address}/api/dashboard/${currentGuild.id}/webhooks`)
+    }
+
+    currentGuildData.modules = webhooks.modules
+    await doModules(currentGuildData.modules)
+
+    document.getElementById("modules-webhooks-enable").onclick = async function () {
+        if (currentGuildData.modules.includes("webhooks")) {
+            webhooksData = await saveNoTime("UPDATE", `${address}/api/dashboard/${currentGuild.id}/webhooks`, {enabled:false})
+        } else {
+            webhooksData = await saveNoTime("UPDATE", `${address}/api/dashboard/${currentGuild.id}/webhooks`, {enabled:true})
+        }
+    
+        await loadWebhooks(webhooksData.data)
+    }
+
+    document.getElementById("webhooks-channel-new").classList = "button-disabled noselect body-item-list-body-send"
+    document.getElementById("webhooks-channel-new").onclick = null
+    
+    document.getElementById("webhooks-channels").innerHTML = ""
+
+    for (channel of currentGuildData.channels) {
+        if (channel.type != "text") continue 
+
+        item = document.createElement("div")
+        item.classList = "body-item-list-item"
+        item.innerHTML = `<span class="noselect body-item-list-item-text vertical-center" id="${channel.id}">#${channel.name}</span>`
+        item.id = channel.id
+
+        item.onclick = async function(e) {
+            document.getElementById("webhooks-channel-new").onclick = addOnclick
+            document.getElementById("webhooks-channel-new").classList = "button-primary noselect body-item-list-body-send"
+
+            document.getElementById("webhooks-channel-chat").innerHTML = ""
+            target = document.getElementById(e.target.id)
+            webhooks_channel_id = e.target.id 
+
+            for (channel of currentGuildData.channels) {
+                chanEl = document.getElementById(channel.id)
+                if (chanEl) {
+                    chanEl.style.width = "100%";
+                    chanEl.style.filter = "brightness(100%)"
+                }
+                
+            }
+
+            target.style.filter = "brightness(150%)"
+            target.style.width = "110%"
+
+            msgs = await request("GET", `${address}/api/dashboard/${currentGuild.id}/webhooks/${webhooks_channel_id}`)
+
+            for (msg of msgs.messages.reverse()) {
+                displayMessage(msg)
+            }
+
+        }
+
+        document.getElementById("webhooks-channels").appendChild(item)
+    }
+
+    if (webhooks.modules.includes("webhooks")) {
+        document.getElementById("modules-webhooks-title").classList.remove("disabled")
+
+        document.getElementById("modules-webhooks-enable").className = "button-danger noselect"
+        document.getElementById("modules-webhooks-enable-label").innerText = "Disable"
+    } else {
+        document.getElementById("modules-webhooks-title").classList.add("disabled")
+
+        document.getElementById("modules-webhooks-enable").className = "button-success noselect"
+        document.getElementById("modules-webhooks-enable-label").innerText = "Enable"
+    }
+
+
+    
+}
+
+async function openWebhooks(e) {
+    if (document.getElementById("modules-toggle").style.display != "none" && (document.querySelector(".body").style.left != "55px")) {
+        document.getElementById("modules-toggle").click()
+    }
+    
+    if (document.getElementById("dashboard-modules-webhooks").style.opacity != 1) {
+        await closeAll(document.getElementById("dashboard-modules-webhooks"))
+        await loadWebhooks()
+
+        e.style.backgroundColor = "rgb(255, 255, 255, 0.2)"
+        document.getElementById("dashboard-modules-webhooks").style.opacity = "100%"
+        document.getElementById("dashboard-modules-webhooks").style.height = "100%"
+        
+    } else {
+        e.style.backgroundColor = ""
+        document.getElementById("dashboard-modules-webhooks").style.opacity = "0%"
+
+        document.getElementById("dashboard-modules-webhooks").style.height = 0
+    }
+
+    window.history.pushState(null, null, `/dashboard/${guild.id}/modules-webhooks`)
+}

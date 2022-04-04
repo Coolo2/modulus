@@ -5,7 +5,7 @@ notifications = {
     notifications:[],
     close : async function (notification) {
         document.body.style.overflowX = "hidden"
-        notification.style.right = "-400px"
+        notification.style.right = "-550px"
             
         setTimeout(function() {
             notification.remove()
